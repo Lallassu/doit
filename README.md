@@ -34,6 +34,7 @@ The vue part was based and inspired by https://github.com/webnoobcodes/vuejs-tod
 * In order to send email reminders you need to use a mailserver. I use postfix locally.
 * You need to run DoIt with TLS if you want to be able to use phone app.
 * First site access will allow for admin creation!
+* All new accounts must be validated by admin before being able to login.
 
 Create a tarball with binary and distribution build.
 ```
