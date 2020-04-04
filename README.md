@@ -35,9 +35,16 @@ The vue part was based and inspired by https://github.com/webnoobcodes/vuejs-tod
 * You need to run DoIt with TLS if you want to be able to use phone app.
 * First access will allow for admin creation!
 
+Create a tarball with binary and distribution build.
+```
+make dist
+```
+
+Run from the dist build:
 ```
 ./doit -tlscert server.crt -tlskey server.key -mailhost localhost:25 -database my.db
 ```
+
 ## Development
 
 Development environment (requires TLS certificates, se makefile):
