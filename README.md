@@ -38,6 +38,12 @@ The vue part was based and inspired by https://github.com/webnoobcodes/vuejs-tod
 ```
 ./doit -tlscert server.crt -tlskey server.key -mailhost localhost:25 -database my.db
 ```
+## Development
+
+Development environment (requires TLS certificates, se makefile):
+```
+make dev
+```
 
 ## Todo
 
@@ -45,14 +51,6 @@ The vue part was based and inspired by https://github.com/webnoobcodes/vuejs-tod
 * Throttle signup/login requests better.
 * Code cleanup for both backend and frontend.
 * Packaging
-
-## Development
-
-Development environment (requires TLS certificates, se makefile):
-```
-cd frontend && yarn install
-make dev
-```
 
 ## Screenshots
 

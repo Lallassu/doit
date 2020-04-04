@@ -2,7 +2,7 @@ dev: prepare
 	cd backend && go run . -tlscert server.crt -tlskey server.key
 
 prepare:
-	cd frontend && yarn run build
+	cd frontend && yarn install && yarn run build
 	rm -rf backend/dist
 	cp -r frontend/dist backend/dist
 	cp backend/manifest.webmanifest backend/dist/
