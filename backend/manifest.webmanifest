@@ -1,0 +1,15 @@
+{
+  "short_name": "DoIt",
+  "name": "DoIt",
+  "description": "Simple Todo List",
+  "icons": [
+    {
+      "src":"doit.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/index.html",
+  "background_color": "#000",
+  "display": "standalone"
+}
