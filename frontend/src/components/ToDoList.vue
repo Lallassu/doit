@@ -105,13 +105,13 @@
                 @md-confirm="newList"
                 md-confirm-text="Create"/>
                 <md-button class="md-primary md-raised" @click="newListActive = true">New List</md-button>
-                <div v-for="(item, index) in lists" :key="item.ID">
+                <div v-for="item in lists" :key="item.ID">
                     <a href="#"> 
                         <span class="list-menu-item" @click="selectList(item)">{{ item.Name }}<span v-if="item.ID == account.Favorite" class="fa fa-star fav-size"> </span></span>
                     </a>
                 </div>
                 <md-button class="md-default md-raised" @click="logout()">Logout</md-button>
-                <span style="font-size: 0.8rem;">Logged in as <span style="font-size: 0.8rem; color: #fff;" v-model="user">{{ account.User }}</span></span>
+                <span style="font-size: 0.8rem;">Logged in as <span style="font-size: 0.8rem; color: #fff;">{{ account.User }}</span></span>
             </Slide>
             <div v-if="nolists"> 
                 <md-button class="md-primary md-raised" @click="newListActive = true">Create your first list</md-button>
@@ -207,7 +207,7 @@
                 </div>
             </div>
             <div class="todo-list complete-list" v-if="showCompletedList">
-                <div :style="{height: item.itemSize+'px'}" class="item" :class="{'show': item.show}" v-for="(item, index) in completedToDoList" :key="item.ID">
+                <div :style="{height: item.itemSize+'px'}" class="item" :class="{'show': item.show}" v-for="item in completedToDoList" :key="item.ID">
                     <div class="item-checkbox">
                         <i v-if="!item.Complete" class="fas fa-square"></i>
                         <i v-else class="fas fa-check-square" @click="uncompleteItem(item)"></i>
@@ -266,7 +266,6 @@
 
 
 <script>
-import { setTimeout } from 'timers';
 import { SlickList, SlickItem } from 'vue-slicksort';
 import { Slide } from 'vue-burger-menu'  // import the CSS transitions you wish to use, in this case we are using `Slide`
 import $ from 'jquery';
@@ -319,6 +318,7 @@ export default {
     },
     created: function() {
         // Check if already logged in, not that safe, but...
+        var that = this;
         if (localStorage.token != "" && localStorage.token != undefined) {
             this.loggedIn = true;
             this.account = JSON.parse(localStorage.getItem('account'));
@@ -327,7 +327,6 @@ export default {
                 this.fetchAdminItems();
             } else {
                 this.fetchLists()
-                var that = this;
                 setInterval(function() {
                     if(that.loggedIn) {
                         that.periodcalUpdate();
@@ -336,7 +335,6 @@ export default {
             }
         } else {
             // Check if admin has been created.
-            var that = this;
             $.ajax({
                    type: "GET",
                    url: "/hasadm",
@@ -344,7 +342,7 @@ export default {
                        if(data == false) {
                            that.createadm = true;
                        }else {
-                            that.createadm = false;
+                           that.createadm = false;
                        }
                    },
                    error: that.handleError
@@ -438,7 +436,7 @@ export default {
                        type: "POST",
                        url: "/signup",
                        data: JSON.stringify(data),
-                       success: function(data) {
+                       success: function() {
                            window.location.reload();
                        },
                        error: that.handleError
@@ -466,7 +464,7 @@ export default {
                    url: "/api/favorite",
                    data: JSON.stringify(fav),
                    beforeSend: that.setHeader,
-                   success: function(data) {
+                   success: function() {
                        that.fetchLists()
                    },
                    error: that.handleError
@@ -490,7 +488,7 @@ export default {
                    url: "/api/removesharelist",
                    data: JSON.stringify(share),
                    beforeSend: that.setHeader,
-                   success: function(data) {
+                   success: function() {
                        that.fetchLists()
                        let index = that.activelist.Share.findIndex(element => element.ID === user.ID);
                        that.activelist.Share.splice(index, 1);
@@ -533,7 +531,7 @@ export default {
                    url: "/api/deletelist",
                    data: JSON.stringify(this.activelist),
                    beforeSend: that.setHeader,
-                   success: function(data) {
+                   success: function() {
                        that.todoList = [];
                        that.completedToDoList = [];
                        that.activelist = "";
@@ -550,7 +548,7 @@ export default {
                    type: "POST",
                    url: "/api/logout",
                    beforeSend: that.setHeader,
-                   success: function(data) {
+                   success: function() {
                        that.loggedIn = false;
                        that.account = "";
                        localStorage.clear();
@@ -665,7 +663,7 @@ export default {
                    beforeSend: that.setHeader,
                    url: "/api/rename",
                    data: JSON.stringify(list),
-                   success: function(e) {
+                   success: function() {
                        that.activelist.Name = list.Name;
                    },
                    error: that.handleError
@@ -673,7 +671,7 @@ export default {
             this.newListName = "";
         },
         // Sorting event for moving an item in the list
-        sortStart(events) {
+        sortStart() {
             let newCanvas = document.querySelector('.drag-helper')
             var text = newCanvas.innerText;
             newCanvas.innerHTML = "<div style="+
@@ -808,7 +806,6 @@ export default {
         // Add a new entry
         addItem() {
             if(this.entry !== '') {
-                let date = new Date;
                 let newEntry = {
                     Note: "",
                     Time: "",
@@ -851,7 +848,7 @@ export default {
                 item.itemSize = 60;
             }
         },
-        noteInput(item) {
+        noteInput() {
             // TBD: Save each entry...? "auto saved.." timer?
         },
         // Save an item with any changes made

@@ -42,7 +42,7 @@ func (d *DB) CreateUser(user, pass, email string, admin bool) bool {
 
 	existing := Account{}
 	d.db.Where("user = ?", user).First(&existing)
-	if existing.ID == 0 {
+	if existing.ID != 0 {
 		return false
 	}
 

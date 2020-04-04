@@ -36,7 +36,7 @@ The vue part was based and inspired by https://github.com/webnoobcodes/vuejs-tod
 * First access will allow for admin creation!
 
 ```
-./doit -tlscert server.crt -tlskey server.key -mailhost localhost:25
+./doit -tlscert server.crt -tlskey server.key -mailhost localhost:25 -database my.db
 ```
 
 ## Todo
@@ -46,12 +46,12 @@ The vue part was based and inspired by https://github.com/webnoobcodes/vuejs-tod
 * Code cleanup for both backend and frontend.
 * Packaging
 
-## Installation
+## Development
 
 Development environment (requires TLS certificates, se makefile):
 ```
-cd frontend && npm install
-cd backend && make dev
+cd frontend && yarn install
+make dev
 ```
 
 ## Screenshots
