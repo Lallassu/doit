@@ -14,7 +14,7 @@ The vue part was based and inspired by https://github.com/webnoobcodes/vuejs-tod
 * Share lists with other users
 * Add reminders for items (sent via mail)
 * Add notes to items 
-* Complete and item but still be able to view it.
+* Complete an item but still be able to view it.
 * Sort items (optimises the shopping for shopping lists!)
 * Delete items 
 * Multiple lists 
@@ -33,7 +33,7 @@ The vue part was based and inspired by https://github.com/webnoobcodes/vuejs-tod
 ## Usage & Requirements
 * In order to send email reminders you need to use a mailserver. I use postfix locally.
 * You need to run DoIt with TLS if you want to be able to use phone app.
-* First access will allow for admin creation!
+* First site access will allow for admin creation!
 
 Create a tarball with binary and distribution build.
 ```
@@ -47,7 +47,7 @@ Run from the dist build:
 
 ## Development
 
-Development environment (requires TLS certificates, se makefile):
+Development environment (requires TLS certificates, see makefile):
 ```
 make dev
 ```
@@ -58,6 +58,7 @@ make dev
 * Throttle signup/login requests better.
 * Code cleanup for both backend and frontend.
 * Packaging
+* Structure backend after best practices
 
 ## Screenshots
 
