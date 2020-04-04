@@ -11,9 +11,11 @@ prepare:
 	cp backend/service-worker.js backend/dist
 
 dist: prepare
+	mkdir doit
 	cd backend && go build -o doit
 	cp -r backend/doit backend/dist backend/doit.png backend/manifest.webmanifest backend/service-worker.js doit/
 	tar cvfz doit.tar.gz doit
+	rm -rf doit
 
 clean:
 	rm -f doit.tar.gz
