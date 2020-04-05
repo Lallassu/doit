@@ -1,219 +1,178 @@
 <template>
     <div class="container">
         <div v-if="errorText != ''">
-            <span class="error">Something went wrong: {{ errorText }}</span>
+            <span class="error">Something went wrong: {{ errorText }}
+                <br>
+                Please reload page.
+            </span>
         </div>
-        <div v-if="account.Admin">
-            <div>
-            <md-button class="md-default md-raised" id="adm-logout-btn" @click="logout()">Logout</md-button>
-            <span class="adminText">You are admin.</span>
-            <md-table v-model="accounts" md-sort="user" md-sort-order="asc" md-card>
-                <md-table-toolbar>
-                    <h1 class="md-title">Accounts</h1>
-                </md-table-toolbar>
-                <md-table-row slot="md-table-row" slot-scope="{ item }">
-                    <md-table-cell md-label="ID" md-numeric>{{ item.ID }}</md-table-cell>
-                    <md-table-cell md-label="user" md-sort-by="name">{{ item.User }}</md-table-cell>
-                    <md-table-cell md-label="email" md-sort-by="email">{{ item.Email }}</md-table-cell>
-                    <md-table-cell md-label="admin" md-sort-by="admin">{{ item.Admin }}</md-table-cell>
-                    <md-table-cell md-label="validated" md-sort-by="validated">{{ item.Validated }}</md-table-cell>
-                    <md-table-cell md-label="updated" md-sort-by="updated">{{ item.CreatedAt }}</md-table-cell>
-                    <md-table-cell md-label="created" md-sort-by="created">{{ item.UpdatedAt }}</md-table-cell>
-                    <md-table-cell v-if="!item.Validated" md-label="validate"><md-button id="validate-btn" class="md-default md-raised" @click="validateAccount(item.ID)">Validate</md-button></md-table-cell>
-                    <md-table-cell v-if="!item.Admin" md-label="remove"><md-button id="remove-btn" class="md-default md-raised" @click="removeAccount(item.ID)">Remove</md-button></md-table-cell>
-                </md-table-row>
-            </md-table>
-            </div>
-            <div>
-            <md-table v-model="tokens" md-sort="created" md-sort-order="asc" md-card>
-                <md-table-toolbar>
-                    <h1 class="md-title">Tokens</h1>
-                </md-table-toolbar>
-                <md-table-row slot="md-table-row" slot-scope="{ item }">
-                    <md-table-cell md-label="ID" md-numeric>{{ item.ID }}</md-table-cell>
-                    <md-table-cell md-label="Account" md-sort-by="account">{{ item.Account.User }}</md-table-cell>
-                    <md-table-cell md-label="Token" md-sort-by="token">{{ item.Token }}</md-table-cell>
-                    <md-table-cell md-label="created" md-sort-by="created">{{ item.CreatedAt }}</md-table-cell>
-                    <md-table-cell md-label="revoke"><md-button id="remove-btn" class="md-default md-raised" @click="revokeToken(item.ID)">Revoke</md-button></md-table-cell>
-                </md-table-row>
-            </md-table>
-            </div>
-        </div>
-        <div id="signupdiv" v-if="createadm || createNewAcc">
-            <span v-if="createadm" class="adminText"> This will create the admin account!</span>
-            <div id="user" class="user-login">
-                <div class="user-icon">
-                    <i class="fas fa-user"></i>
+        <div v-if="errorText == ''">
+            <div v-if="account.Admin">
+                <div>
+                    <md-button class="md-default md-raised" id="adm-logout-btn" @click="logout()">Logout</md-button>
+                    <span class="adminText">You are admin.</span>
+                    <md-table v-model="accounts" md-sort="user" md-sort-order="asc" md-card>
+                        <md-table-toolbar>
+                            <h1 class="md-title">Accounts</h1>
+                        </md-table-toolbar>
+                        <md-table-row slot="md-table-row" slot-scope="{ item }">
+                            <md-table-cell md-label="ID" md-numeric>{{ item.ID }}</md-table-cell>
+                            <md-table-cell md-label="user" md-sort-by="name">{{ item.User }}</md-table-cell>
+                            <md-table-cell md-label="email" md-sort-by="email">{{ item.Email }}</md-table-cell>
+                            <md-table-cell md-label="admin" md-sort-by="admin">{{ item.Admin }}</md-table-cell>
+                            <md-table-cell md-label="validated" md-sort-by="validated">{{ item.Validated }}</md-table-cell>
+                            <md-table-cell md-label="updated" md-sort-by="updated">{{ item.CreatedAt }}</md-table-cell>
+                            <md-table-cell md-label="created" md-sort-by="created">{{ item.UpdatedAt }}</md-table-cell>
+                            <md-table-cell v-if="!item.Validated" md-label="validate"><md-button id="validate-btn" class="md-default md-raised" @click="validateAccount(item.ID)">Validate</md-button></md-table-cell>
+                            <md-table-cell v-if="!item.Admin" md-label="remove"><md-button id="remove-btn" class="md-default md-raised" @click="removeAccount(item.ID)">Remove</md-button></md-table-cell>
+                        </md-table-row>
+                    </md-table>
                 </div>
-                <form>
-                    <input type="text" placeholder="Username" v-model="username">
-                </form>
-            </div>
-            <div id="pass" class="user-login">
-                <div class="user-icon">
-                    <i class="fas fa-envelope"></i>
-                </div>
-                <form>
-                    <input type="text" placeholder="email@example.com" v-model="email">
-                </form>
-            </div>
-            <div id="pass" class="user-login">
-                <div class="pass-icon">
-                    <i class="fas fa-key"></i>
-                </div>
-                <form>
-                    <input type="password" placeholder="Password" v-model="password">
-                </form>
-            </div>
-            <div id="pass" class="user-login">
-                <div class="pass-icon">
-                    <i class="fas fa-key"></i>
-                </div>
-                <form>
-                    <input placeholder="Repeat password..." v-on:keyup.enter="signup()" type="password" v-model="password2">
-                </form>
-            </div>
-            <md-button class="md-primary md-raised login-btn" @click="signup()">Create Account</md-button>
-        </div>
-        <div id="logindiv" v-if="!loggedIn && !createadm && !createNewAcc">
-            <div id="user" class="user-login">
-                <div class="user-icon">
-                    <i class="fas fa-user"></i>
-                </div>
-                <form>
-                    <input v-on:keyup.enter="login()" type="text" placeholder="User" v-model="username">
-                </form>
-            </div>
-            <div id="pass" class="user-login">
-                <div class="pass-icon">
-                    <i class="fas fa-key"></i>
-                </div>
-                <form>
-                    <input v-on:keyup.enter="login()" type="password" placeholder="Password" v-model="password">
-                </form>
-            </div>
-            <md-button class="md-primary md-raised login-btn" @click="login()">Login</md-button>
-            <md-button id="signup-btn" class="md-primary signup-btn" @click="createNewAcc = true">Sign Up</md-button>
-        </div>
-        <div v-if="loggedIn && !account.Admin">
-            <Slide>
-            <md-dialog-prompt
-                :md-active.sync="newListActive"
-                v-model="newListValue"
-                md-title="New List Name"
-                md-inp2t-maxlength="20"
-                @md-confirm="newList"
-                md-confirm-text="Create"/>
-                <md-button class="md-primary md-raised" @click="newListActive = true">New List</md-button>
-                <div v-for="item in lists" :key="item.ID">
-                    <a href="#"> 
-                        <span class="list-menu-item" @click="selectList(item)">{{ item.Name }}<span v-if="item.ID == account.Favorite" class="fa fa-star fav-size"> </span></span>
-                    </a>
-                </div>
-                <md-button class="md-default md-raised" @click="logout()">Logout</md-button>
-                <span style="font-size: 0.8rem;">Logged in as <span style="font-size: 0.8rem; color: #fff;">{{ account.User }}</span></span>
-            </Slide>
-            <div v-if="nolists"> 
-                <md-button class="md-primary md-raised" @click="newListActive = true">Create your first list</md-button>
-            </div>
-            <div id="listid" class="list-name" v-if="activelist">
-                <div class="button">
-                    <md-dialog-prompt
-                        :md-active.sync="listActive"
-                        v-model="newListName"
-                        md-title="Change List Name"
-                        md-input-maxlength="20"
-                        @md-confirm="changeListName"
-                        md-confirm-text="Update"/>
-
-                        <md-button id="changeListName" class="md-primary" @click="listActive = true">{{ activelist.Name }} </md-button>
-                        <md-button class="md-primary" id="delete-btn" @click="showDeleteList = true"><span class="fa fa-trash"></span></md-button>
-                        <md-button class="md-primary" id="share-btn" @click="showShareList = true"><span class="fa fa-user-plus"></span></md-button>
-                        <md-button @click="setFavorite()" id="fav-btn" class="md-primary" :class="{'fav-btn-active': activelist.Favorite == true}"><span class="fa fa-star"></span></md-button>
-                        <md-button id="addToHome" class="md-primary md-raised"><span class="fa fa-mobile-alt"></span></md-button>
-
-
-                        <md-dialog-confirm
-                            :md-active.sync="showDeleteList"
-                            md-title="Delete List?"
-                            md-content="This will remove the list AND all items in the list, are you really sure?"
-                            @md-confirm="deleteList()"
-                            md-confirm-text="Delete"/>
-
-                            <md-dialog-prompt
-                                :md-active.sync="showShareList"
-                                v-model="shareWithUser"
-                                md-title="Share List With User"
-                                md-content="Enter the e-mail or user you want to share this list with?"
-                                md-inp2t-maxlength="20"
-                                @md-confirm="shareList()"
-                                md-confirm-text="Share"/>
+                <div>
+                    <md-table v-model="tokens" md-sort="created" md-sort-order="asc" md-card>
+                        <md-table-toolbar>
+                            <h1 class="md-title">Tokens</h1>
+                        </md-table-toolbar>
+                        <md-table-row slot="md-table-row" slot-scope="{ item }">
+                            <md-table-cell md-label="ID" md-numeric>{{ item.ID }}</md-table-cell>
+                            <md-table-cell md-label="Account" md-sort-by="account">{{ item.Account.User }}</md-table-cell>
+                            <md-table-cell md-label="Token" md-sort-by="token">{{ item.Token }}</md-table-cell>
+                            <md-table-cell md-label="created" md-sort-by="created">{{ item.CreatedAt }}</md-table-cell>
+                            <md-table-cell md-label="revoke"><md-button id="remove-btn" class="md-default md-raised" @click="revokeToken(item.ID)">Revoke</md-button></md-table-cell>
+                        </md-table-row>
+                    </md-table>
                 </div>
             </div>
-            <div class="add-item" v-if="!errorText && activelist">
-                <div class="add-icon" @click="addItem">
-                    <i class="fas fa-plus"></i>
-                </div>
-                <form @submit.prevent="addItem">
-                    <input type="text" placeholder="Add..." v-model="entry">
-                </form>
-            </div>
-            <div>
-            </div>
-            <div class="todo-list list-list">
-                <SlickList @sort-start="sortStart($event)" helperClass="drag-helper" :transitionDuration="0" :lockToContainerEdges="true" :pressDelay="250" @input="sortEnd" lockAxis="y" v-model="todoList">
-                <SlickItem v-on:dblclick.native="changeTitle(item)" :style="{height: item.itemSize+'px'}" :index="index" class="item" :class="{'show': item.show}" v-for="(item, index) in todoList" :key="item.ID">
-                <div class="item-checkbox">
-                    <i v-if="!item.Complete" class="fas fa-square" @click="completeItem(item)"></i>
-                    <i v-else class="fas fa-check-square"></i>
-                </div>
-                <div class="item-title" :id="item.ID">
-                    {{ item.Title }} 
-                </div>
-                <div class="item-owner" v-if="activelist.Share != null && activelist.Share.length > 0">
-                    <span style="margin-right: 10px; font-size: 0.7rem; color: #888;"> [{{item.Account.User}}]</span>
-                </div>
-                <div class="feature-icon-copy">
-                    <i class="fas fa-copy" @click="copy(item);"></i>
-                </div>
-                <div class="feature-icon" :class="{'red-bg': item.Note.length > 0}">
-                    <i class="fas fa-pen" @click="showNote(item);"></i>
-                </div>
-                <div class="feature-icon-bell" :class="{'red-bg': item.Time.length > 0}">
-                    <i class="fas fa-bell" @click="showTime(item)"></i>
-                </div>
-
-                <div class="item-note" v-if="item.showNote">
-                    <md-field>
-                        <label>Note</label>
-                        <md-textarea v-model="item.Note" @input="noteInput(item)"></md-textarea>
-                    </md-field>
-                    <md-button class="md-primary md-raised" @click="saveNote(item)">Save</md-button>
-                    <md-button class="md-accent md-raised" @click="showNote(item)">Cancel</md-button>
-                </div>
-                <div class="item-alarm" v-if="item.showTime">
-                    <datetime class="vdatetime-input" type="datetime" v-model="item.Time"></datetime>
-                    <br>
-                    <md-button class="md-primary md-raised" @click="saveTime(item)">Set Alarm</md-button>
-                    <md-button class="md-accent md-raised" @click="clearTime(item);">Clear</md-button>
-                </div>
-                </SlickItem>
-                </SlickList>
-            </div>
-            <div class="show-completed" v-if="completedToDoList.length > 0">
-                <div class="button" @click="showCompletedList = !showCompletedList">
-                    <span v-if="!showCompletedList">show</span><span v-else>hide</span> 
-                    completed to-do's
-                </div>
-            </div>
-            <div class="todo-list complete-list" v-if="showCompletedList">
-                <div :style="{height: item.itemSize+'px'}" class="item" :class="{'show': item.show}" v-for="item in completedToDoList" :key="item.ID">
-                    <div class="item-checkbox">
-                        <i v-if="!item.Complete" class="fas fa-square"></i>
-                        <i v-else class="fas fa-check-square" @click="uncompleteItem(item)"></i>
+            <div id="signupdiv" v-if="createadm || createNewAcc">
+                <span v-if="createadm" class="adminText"> This will create the admin account!</span>
+                <div id="user" class="user-login">
+                    <div class="user-icon">
+                        <i class="fas fa-user"></i>
                     </div>
-                    <div class="item-title">
-                        {{ item.Title }}
+                    <form>
+                        <input type="text" placeholder="Username" v-model="username">
+                    </form>
+                </div>
+                <div id="pass" class="user-login">
+                    <div class="user-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <form>
+                        <input type="text" placeholder="email@example.com" v-model="email">
+                    </form>
+                </div>
+                <div id="pass" class="user-login">
+                    <div class="pass-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <form>
+                        <input type="password" placeholder="Password" v-model="password">
+                    </form>
+                </div>
+                <div id="pass" class="user-login">
+                    <div class="pass-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <form>
+                        <input placeholder="Repeat password..." v-on:keyup.enter="signup()" type="password" v-model="password2">
+                    </form>
+                </div>
+                <md-button class="md-primary md-raised login-btn" @click="signup()">Create Account</md-button>
+            </div>
+            <div id="logindiv" v-if="!loggedIn && !createadm && !createNewAcc">
+                <div id="user" class="user-login">
+                    <div class="user-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <form>
+                        <input v-on:keyup.enter="login()" type="text" placeholder="User" v-model="username">
+                    </form>
+                </div>
+                <div id="pass" class="user-login">
+                    <div class="pass-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <form>
+                        <input v-on:keyup.enter="login()" type="password" placeholder="Password" v-model="password">
+                    </form>
+                </div>
+                <md-button class="md-primary md-raised login-btn" @click="login()">Login</md-button>
+                <md-button id="signup-btn" class="md-primary signup-btn" @click="createNewAcc = true">Sign Up</md-button>
+            </div>
+            <div v-if="loggedIn && !account.Admin">
+                <Slide :closeOnNavigation="true" >
+                <md-dialog-prompt
+                    :md-active.sync="newListActive"
+                    v-model="newListValue"
+                    md-title="New List Name"
+                    md-inp2t-maxlength="20"
+                    @md-confirm="newList"
+                    md-confirm-text="Create"/>
+                    <md-button class="md-primary md-raised" @click="newListActive = true">New List</md-button>
+                    <div v-for="item in lists" :key="item.ID">
+                        <a href="#"> 
+                            <span class="list-menu-item" @click="selectList(item)">{{ item.Name }}<span v-if="item.ID == account.Favorite" class="fa fa-star fav-size"> </span></span>
+                        </a>
+                    </div>
+                    <md-button class="md-default md-raised" @click="logout()">Logout</md-button>
+                    <span style="font-size: 0.8rem;">Logged in as <span style="font-size: 0.8rem; color: #fff;">{{ account.User }}</span></span>
+                </Slide>
+                <div v-if="nolists"> 
+                    <md-button class="md-primary md-raised" @click="newListActive = true">Create your first list</md-button>
+                </div>
+                <div id="listid" class="list-name" v-if="activelist">
+                    <div class="button">
+                        <md-dialog-prompt
+                            :md-active.sync="listActive"
+                            v-model="newListName"
+                            md-title="Change List Name"
+                            md-input-maxlength="20"
+                            @md-confirm="changeListName"
+                            md-confirm-text="Update"/>
+
+                            <md-button id="changeListName" class="md-primary" @click="listActive = true">{{ activelist.Name }} </md-button>
+                            <md-button class="md-primary" id="delete-btn" @click="showDeleteList = true"><span class="fa fa-trash"></span></md-button>
+                            <md-button class="md-primary" id="share-btn" @click="showShareList = true"><span class="fa fa-user-plus"></span></md-button>
+                            <md-button @click="setFavorite()" id="fav-btn" class="md-primary" :class="{'fav-btn-active': activelist.Favorite == true}"><span class="fa fa-star"></span></md-button>
+                            <md-button id="addToHome" class="md-primary md-raised"><span class="fa fa-mobile-alt"></span></md-button>
+
+
+                            <md-dialog-confirm
+                                :md-active.sync="showDeleteList"
+                                md-title="Delete List?"
+                                md-content="This will remove the list AND all items in the list, are you really sure?"
+                                @md-confirm="deleteList()"
+                                md-confirm-text="Delete"/>
+
+                                <md-dialog-prompt
+                                    :md-active.sync="showShareList"
+                                    v-model="shareWithUser"
+                                    md-title="Share List With User"
+                                    md-content="Enter the e-mail or user you want to share this list with?"
+                                    md-inp2t-maxlength="20"
+                                    @md-confirm="shareList()"
+                                    md-confirm-text="Share"/>
+                    </div>
+                </div>
+                <div class="add-item" v-if="!errorText && activelist">
+                    <div class="add-icon" @click="addItem">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <form @submit.prevent="addItem">
+                        <input type="text" placeholder="Add..." v-model="entry">
+                    </form>
+                </div>
+                <div>
+                </div>
+                <div class="todo-list list-list">
+                    <SlickList @sort-start="sortStart($event)" helperClass="drag-helper" :transitionDuration="0" :lockToContainerEdges="true" :pressDelay="350" @input="sortEnd" lockAxis="y" v-model="todoList">
+                    <SlickItem v-on:dblclick.native="changeTitle(item)" :style="{height: item.itemSize+'px'}" :index="index" class="item" :class="{'show': item.show}" v-for="(item, index) in todoList" :key="item.ID">
+                    <div class="item-checkbox">
+                        <i v-if="!item.Complete" class="fas fa-square" @click="completeItem(item)"></i>
+                        <i v-else class="fas fa-check-square"></i>
+                    </div>
+                    <div class="item-title" :id="item.ID">
+                        {{ item.Title }} 
                     </div>
                     <div class="item-owner" v-if="activelist.Share != null && activelist.Share.length > 0">
                         <span style="margin-right: 10px; font-size: 0.7rem; color: #888;"> [{{item.Account.User}}]</span>
@@ -227,6 +186,7 @@
                     <div class="feature-icon-bell" :class="{'red-bg': item.Time.length > 0}">
                         <i class="fas fa-bell" @click="showTime(item)"></i>
                     </div>
+
                     <div class="item-note" v-if="item.showNote">
                         <md-field>
                             <label>Note</label>
@@ -241,24 +201,69 @@
                         <md-button class="md-primary md-raised" @click="saveTime(item)">Set Alarm</md-button>
                         <md-button class="md-accent md-raised" @click="clearTime(item);">Clear</md-button>
                     </div>
+                    </SlickItem>
+                    </SlickList>
                 </div>
-            </div>
-            <div v-if="activelist != undefined && activelist != ''">
-                <md-dialog-confirm
-                    :md-active.sync="showRemoveShareList"
-                    v-model="removeUser"
-                    md-title="Remove Share?"
-                    md-content="This will the user from shared list, are you really sure?"
-                    @md-confirm="removeUserShare()"
-                    md-confirm-text="Remove"/>
-                    <div style="margin-top: 20px;" v-if="activelist.Share != null">
-                        <div v-if="activelist.Share.length > 0 ">
-                            <md-button class="md-primary" id="owner-btn"><span class="fa fa-user"> {{activelist.Account.User}}</span></md-button>
-                            <span :index="index" v-for="(item, index) in activelist.Share" :key="item.ID">
-                                <md-button @click="removeUser=item; showRemoveShareList = true" class="md-primary" id="shared-btn"><span class="fa fa-users"> {{item.User}} </span></md-button>
-                            </span>
+                <div class="show-completed" v-if="completedToDoList.length > 0">
+                    <div class="button" @click="showCompletedList = !showCompletedList">
+                        <span v-if="!showCompletedList">show</span><span v-else>hide</span> 
+                        completed to-do's
+                    </div>
+                </div>
+                <div class="todo-list complete-list" v-if="showCompletedList">
+                    <div :style="{height: item.itemSize+'px'}" class="item" :class="{'show': item.show}" v-for="item in completedToDoList" :key="item.ID">
+                        <div class="item-checkbox">
+                            <i v-if="!item.Complete" class="fas fa-square"></i>
+                            <i v-else class="fas fa-check-square" @click="uncompleteItem(item)"></i>
+                        </div>
+                        <div class="item-title">
+                            {{ item.Title }}
+                        </div>
+                        <div class="item-owner" v-if="activelist.Share != null && activelist.Share.length > 0">
+                            <span style="margin-right: 10px; font-size: 0.7rem; color: #888;"> [{{item.Account.User}}]</span>
+                        </div>
+                        <div class="feature-icon-copy">
+                            <i class="fas fa-copy" @click="copy(item);"></i>
+                        </div>
+                        <div class="feature-icon" :class="{'red-bg': item.Note.length > 0}">
+                            <i class="fas fa-pen" @click="showNote(item);"></i>
+                        </div>
+                        <div class="feature-icon-bell" :class="{'red-bg': item.Time.length > 0}">
+                            <i class="fas fa-bell" @click="showTime(item)"></i>
+                        </div>
+                        <div class="item-note" v-if="item.showNote">
+                            <md-field>
+                                <label>Note</label>
+                                <md-textarea v-model="item.Note" @input="noteInput(item)"></md-textarea>
+                            </md-field>
+                            <md-button class="md-primary md-raised" @click="saveNote(item)">Save</md-button>
+                            <md-button class="md-accent md-raised" @click="showNote(item)">Cancel</md-button>
+                        </div>
+                        <div class="item-alarm" v-if="item.showTime">
+                            <datetime class="vdatetime-input" type="datetime" v-model="item.Time"></datetime>
+                            <br>
+                            <md-button class="md-primary md-raised" @click="saveTime(item)">Set Alarm</md-button>
+                            <md-button class="md-accent md-raised" @click="clearTime(item);">Clear</md-button>
                         </div>
                     </div>
+                </div>
+                <div v-if="activelist != undefined && activelist != ''">
+                    <md-dialog-confirm
+                        :md-active.sync="showRemoveShareList"
+                        v-model="removeUser"
+                        md-title="Remove Share?"
+                        md-content="This will the user from shared list, are you really sure?"
+                        @md-confirm="removeUserShare()"
+                        md-confirm-text="Remove"/>
+                        <div style="margin-top: 20px;" v-if="activelist.Share != null">
+                            <div v-if="activelist.Share.length > 0 ">
+                                <md-button class="md-primary" id="owner-btn"><span class="fa fa-user"> {{activelist.Account.User}}</span></md-button>
+                                <span :index="index" v-for="(item, index) in activelist.Share" :key="item.ID">
+                                    <md-button @click="removeUser=item; showRemoveShareList = true" class="md-primary" id="shared-btn"><span class="fa fa-users"> {{item.User}} </span></md-button>
+                                </span>
+                            </div>
+                        </div>
+                </div>
             </div>
         </div>
     </div>
@@ -267,7 +272,7 @@
 
 <script>
 import { SlickList, SlickItem } from 'vue-slicksort';
-import { Slide } from 'vue-burger-menu'  // import the CSS transitions you wish to use, in this case we are using `Slide`
+import { Slide } from 'vue-burger-menu'
 import $ from 'jquery';
 
 //import axios from 'axios';
@@ -298,7 +303,7 @@ export default {
             newListName: "",
             listActive: false,
             activelist: "",
-            itemSize: 60,
+            itemSize: 40,
             result: "",
             errorText: "",
             info: "",
@@ -675,13 +680,13 @@ export default {
             let newCanvas = document.querySelector('.drag-helper')
             var text = newCanvas.innerText;
             newCanvas.innerHTML = "<div style="+
-                "'font-size: 24px;"+
+                "'font-size: 1.0rem;"+
                 "background: hsla(0,0%,100%,.5);"+
                 "border-radius: 5px;"+
-                "padding-top: 20px;"+
-                "padding-left: 70px;"+
+                "padding-top: 10px;"+
+                "padding-left: 40px;"+
                 "width: 100%;"+
-                "height: 60px;"+
+                "height: 40px;"+
                 "margin-bottom: 2px;"+
                 "overflow:hidden;'"+
                 ">"+text+"</div>";
@@ -699,7 +704,7 @@ export default {
                    url: "/api/sort",
                    data: JSON.stringify(sortOrder),
                    success: function() {
-                        that.selectList(that.activelist);
+                       that.selectList(that.activelist);
                    },
                    error: that.handleError
             });
@@ -845,7 +850,7 @@ export default {
             if (item.showNote) {
                 item.itemSize = 400;
             } else {
-                item.itemSize = 60;
+                item.itemSize = 40;
             }
         },
         noteInput() {
@@ -888,7 +893,7 @@ export default {
             if (item.showTime) {
                 item.itemSize = 200;
             } else {
-                item.itemSize = 60;
+                item.itemSize = 40;
             }
         },
         // Mark an items as complete
@@ -922,7 +927,7 @@ export default {
         justify-content: center;
         align-items: center;
         color: #719fbb;
-        font-size: 1.6rem;
+        font-size: 1.4rem;
         margin: 0 0px;
         opacity: 0.2;
         cursor: pointer;
@@ -935,7 +940,7 @@ export default {
         justify-content: center;
         align-items: center;
         color: $color;
-        font-size: 1.6rem;
+        font-size: 1.4rem;
         margin: 0 0px;
         cursor: pointer;
     }
@@ -947,7 +952,7 @@ export default {
         justify-content: center;
         align-items: center;
         color: $color;
-        font-size: 1.6rem;
+        font-size: 1.4rem;
         margin: 0 0px;
         cursor: pointer;
     }
@@ -1015,10 +1020,10 @@ export default {
 
         .item {
             display: grid;
-            grid-template-columns: 50px auto 30px 30px 30px 30px;
-            grid-template-rows: 60px;
+            grid-template-columns: 40px auto 30px 30px 30px 30px;
+            grid-template-rows: 40px;
             width: 100%;
-            height: 60px;
+            height: 40px;
             margin-bottom: 2px;
             background: rgba($color: #fff, $alpha: .8);
             border-radius: 5px;
@@ -1051,7 +1056,7 @@ export default {
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                font-size: 1.4rem;
+                font-size: 1.2rem;
                 color: #99C191;
                 cursor: pointer;
             }
@@ -1066,7 +1071,7 @@ export default {
                 display: flex;
                 justify-content: flex-start;
                 align-items: center;
-                font-size: 1.2rem;
+                font-size: 1.0rem;
                 overflow: hidden;
             }
 
@@ -1107,7 +1112,7 @@ export default {
                 position: absolute;
                 top: 30px;
                 width: calc(100% - 120px);
-                margin: 0 60px;
+                margin: 0 40px;
                 border-bottom: 2px solid #555;
             }
         }
@@ -1193,9 +1198,9 @@ export default {
 .user-login {
     display: grid;
     grid-template-columns: 70px auto;
-    grid-template-rows: 60px;
+    grid-template-rows: 40px;
     width: 100%;
-    height: 60px;
+    height: 40px;
     background: rgba($color: #000000, $alpha: .3);
     border-radius: 5px 5px 5px 5px;
     overflow: hidden;

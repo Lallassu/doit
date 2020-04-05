@@ -1,4 +1,5 @@
 dev: prepare
+	cp -r doit/dist backend/dist
 	cd backend && go run . -tlscert server.crt -tlskey server.key -hostport 0.0.0.0:8443
 
 prepare:
@@ -16,4 +17,4 @@ dist: prepare
 clean:
 	rm -f doit.tar.gz
 	rm -rf doit
-
+	rm -rf backend/dist 
