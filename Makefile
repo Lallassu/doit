@@ -3,17 +3,13 @@ dev: prepare
 
 prepare:
 	cd frontend && yarn install && yarn run build
-	rm -rf backend/dist
-	cp -r frontend/dist backend/dist
-	cp backend/manifest.webmanifest backend/dist/
-	cp backend/doit.png backend/dist/
-	cp backend/loader.gif backend/dist/
-	cp backend/service-worker.js backend/dist
+	mkdir -p doit
+	cp -r frontend/dist doit/dist
 
 dist: prepare
-	mkdir doit
+	mkdir -p doit
 	cd backend && go build -o doit
-	cp -r backend/doit backend/dist backend/doit.png backend/manifest.webmanifest backend/service-worker.js doit/
+	cp -r backend/doit doit/
 	tar cvfz doit.tar.gz doit
 	rm -rf doit
 
