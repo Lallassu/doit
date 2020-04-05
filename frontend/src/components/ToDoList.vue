@@ -130,7 +130,7 @@
                         <md-button class="md-primary" id="delete-btn" @click="showDeleteList = true"><span class="fa fa-trash"></span></md-button>
                         <md-button class="md-primary" id="share-btn" @click="showShareList = true"><span class="fa fa-user-plus"></span></md-button>
                         <md-button @click="setFavorite()" id="fav-btn" class="md-primary" :class="{'fav-btn-active': activelist.Favorite == true}"><span class="fa fa-star"></span></md-button>
-                        <md-button id="addToHome" class="md-default md-raised add-button"><span class="fa fa-mobile-alt"></span></md-button>
+                        <md-button id="addToHome" class="md-primary md-raised"><span class="fa fa-mobile-alt"></span></md-button>
 
 
                         <md-dialog-confirm
@@ -1015,7 +1015,7 @@ export default {
 
         .item {
             display: grid;
-            grid-template-columns: 70px auto 40px 40px 40px 40px;
+            grid-template-columns: 50px auto 30px 30px 30px 30px;
             grid-template-rows: 60px;
             width: 100%;
             height: 60px;
@@ -1034,7 +1034,7 @@ export default {
             }
             .item-note {
                 grid-column-start: 1;
-                grid-column-end: 6;
+                grid-column-end: 7;
                 width: 100%;
                 height: 78%;
             }

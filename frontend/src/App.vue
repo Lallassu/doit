@@ -43,7 +43,7 @@ body {
     left: 92%;
 }
 #app .bm-menu {
-    z-index: 1;
+    z-index: 10;
     background: linear-gradient(to bottom right, #21656D, #0D4826);
 }
 

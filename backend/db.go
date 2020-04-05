@@ -245,16 +245,16 @@ func (d *DB) UpdateItem(l *Item, acc *Account) {
 	if d.HaveAccess(acc.ID, uint(l.ListId)) {
 		l.DeletedAt = nil
 		item := &Item{}
-		l.Account = *acc
 		d.db.Preload("Account").First(&item, l.ID)
+
+		// Keep creator account, this is a workaround for now.
+		l.Account = item.Account
 
 		// Only set remindersent to false if time has changed.
 		if l.Time != item.Time {
 			l.ReminderSent = false
 		}
-		if item.Account.ID == acc.ID {
-			d.db.Unscoped().Save(l)
-		}
+		d.db.Unscoped().Save(l)
 	}
 }
 

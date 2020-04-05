@@ -1,5 +1,5 @@
 dev: prepare
-	cd backend && go run . -tlscert server.crt -tlskey server.key
+	cd backend && go run . -tlscert server.crt -tlskey server.key -hostport 0.0.0.0:8443
 
 prepare:
 	cd frontend && yarn install && yarn run build
