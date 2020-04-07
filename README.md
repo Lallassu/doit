@@ -46,6 +46,11 @@ Run from the dist build:
 ./doit -tlscert server.crt -tlskey server.key -mailhost localhost:25 -database my.db
 ```
 
+Run without TLS:
+```
+./doit -skiptls
+```
+
 ## Development
 
 Development environment (requires TLS certificates, see makefile):
