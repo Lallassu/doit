@@ -270,19 +270,28 @@ func (d *DB) Logout(token string, acc *Account) {
 func (d *DB) ShareList(shareWith string, listId int, acc *Account) *Account {
 	// Lookup the list
 	list := &List{}
-	d.db.Preload("Account").First(&list, listId)
+	d.db.Preload("Account").Preload("Share").First(&list, listId)
 	if list.ID == 0 {
 		return nil
+	}
+	// Look up co-owner
+	co := Account{}
+	d.db.Where("user = ? OR email = ?", shareWith, shareWith).First(&co)
+	if co.ID == 0 {
+		return nil
+	}
+
+	// Check if user is already in shared list.
+	for _, a := range list.Share {
+		if a.ID == co.ID {
+			return nil
+		}
 	}
 
 	// Verify owner of list.
 	if acc.ID == list.Account.ID {
-		// Look up co-owner
-		co := Account{}
-		d.db.Where("user = ? OR email = ?", shareWith, shareWith).First(&co)
-
 		// add user to co-owner
-		if co.ID != 0 && co.ID != list.Account.ID {
+		if co.ID != list.Account.ID {
 			d.db.Model(list).Association("Share").Append(co)
 			return &co
 		}

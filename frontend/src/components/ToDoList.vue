@@ -519,7 +519,10 @@ export default {
                        if (that.activelist.Share == null) {
                            that.activelist.Share = [];
                        }
-                       that.activelist.Share.push(userData);
+                       console.log(userData);
+                       if (userData != "") {
+                           that.activelist.Share.push(userData);
+                       }
                        that.shareWithUser = "";
                    },
                    error: that.handleError
@@ -640,6 +643,11 @@ export default {
                    success: function(data) {
                        if (data == "update") {
                            that.selectList(that.activelist);
+                       }
+
+                       if (that.errorText != "") {
+                           that.errorText = "";
+                           window.location.reload();
                        }
                    },
                    error: that.handleError
@@ -1198,9 +1206,9 @@ export default {
 .user-login {
     display: grid;
     grid-template-columns: 70px auto;
-    grid-template-rows: 40px;
+    grid-template-rows: 60px;
     width: 100%;
-    height: 40px;
+    height: 60px;
     background: rgba($color: #000000, $alpha: .3);
     border-radius: 5px 5px 5px 5px;
     overflow: hidden;

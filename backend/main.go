@@ -26,6 +26,7 @@ func main() {
 	hostPort := flag.String("hostport", "localhost:8443", "host:port to run webserver on.")
 	database := flag.String("database", "doit.db", "SQLite database file.")
 	tlsCert := flag.String("tlscert", "server.crt", "TLS certificate")
+	skipTLS := flag.Bool("skiptls", false, "Skip using TLS, PWA will not be available")
 	tlsKey := flag.String("tlskey", "server.key", "TLS key")
 	emailHost := flag.String("mailhost", "localhost:25", "Host:port to SMTP server (empty = disable email notifications)")
 	emailFrom := flag.String("mailfrom", "doit@example.com", "From email for email reminders")
@@ -304,7 +305,8 @@ func main() {
 				if user != nil {
 					c.JSON(http.StatusOK, user)
 				} else {
-					c.JSON(http.StatusBadRequest, "")
+					// Just dont send anything if error or not exists.
+					c.JSON(http.StatusOK, "")
 				}
 			} else {
 				c.JSON(http.StatusBadRequest, "")
@@ -404,7 +406,11 @@ func main() {
 		}
 	})
 
-	log.Fatal(http.ListenAndServeTLS(*hostPort, *tlsCert, *tlsKey, router))
+	if *skipTLS {
+		log.Fatal(http.ListenAndServe(*hostPort, router))
+	} else {
+		log.Fatal(http.ListenAndServeTLS(*hostPort, *tlsCert, *tlsKey, router))
+	}
 }
 
 func SendMail(addr, from, subject, body string, to []string) error {

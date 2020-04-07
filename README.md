@@ -70,3 +70,7 @@ make dev
 ![](preview/menu.png)
 ![](preview/note.png)
 ![](preview/list.png)
+
+# License
+
+MIT
