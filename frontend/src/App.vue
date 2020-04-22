@@ -61,4 +61,10 @@ body {
     color: #fff;
     font-size: 1.3rem;
 }
+#app .vdatetime-overlay {
+    z-index: 1000;
+}
+#app .vdatetime-popup {
+    z-index: 1001;
+}
 </style>

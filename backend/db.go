@@ -320,6 +320,15 @@ func (d *DB) RemoveShareList(shareWith string, listId int, acc *Account) *Accoun
 	return nil
 }
 
+func (d *DB) DeleteCompleted(l *List, acc *Account) {
+	list := &List{}
+	d.db.First(&list, l.ID)
+
+	if d.HaveAccess(acc.ID, uint(list.ID)) {
+		d.db.Unscoped().Where("list_id = ?", list.ID).Where("complete = true").Delete(&Item{})
+	}
+}
+
 func (d *DB) DeleteList(l *List, acc *Account) {
 	list := &List{}
 	d.db.Preload("Account").First(&list, l.ID)

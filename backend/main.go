@@ -354,6 +354,20 @@ func main() {
 		}
 	})
 
+	api.POST("/deletecompleted", func(c *gin.Context) {
+		if acc, ok := c.Get("account"); ok {
+			list := List{}
+			if c.BindJSON(&list) == nil {
+				db.DeleteCompleted(&list, acc.(*Account))
+				c.JSON(http.StatusOK, "")
+			} else {
+				c.JSON(http.StatusBadRequest, "")
+			}
+		} else {
+			c.JSON(http.StatusUnauthorized, "")
+		}
+	})
+
 	api.POST("/deletelist", func(c *gin.Context) {
 		if acc, ok := c.Get("account"); ok {
 			list := List{}

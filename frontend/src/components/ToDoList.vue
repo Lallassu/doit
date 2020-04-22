@@ -92,7 +92,7 @@
                     <div class="pass-icon">
                         <i class="fas fa-key"></i>
                     </div>
-                    <form>
+                    <form @submit.prevent>
                         <input v-on:keyup.enter="login()" type="password" placeholder="Password" v-model="password">
                     </form>
                 </div>
@@ -114,8 +114,8 @@
                             <span class="list-menu-item" @click="selectList(item)">{{ item.Name }}<span v-if="item.ID == account.Favorite" class="fa fa-star fav-size"> </span></span>
                         </a>
                     </div>
-                    <md-button class="md-default md-raised" @click="logout()">Logout</md-button>
                     <span style="font-size: 0.8rem;">Logged in as <span style="font-size: 0.8rem; color: #fff;">{{ account.User }}</span></span>
+                    <md-button class="md-default md-raised" @click="logout()">Logout</md-button>
                 </Slide>
                 <div v-if="nolists"> 
                     <md-button class="md-primary md-raised" @click="newListActive = true">Create your first list</md-button>
@@ -164,8 +164,8 @@
                 </div>
                 <div>
                 </div>
-                <div class="todo-list list-list">
-                    <SlickList @sort-start="sortStart($event)" helperClass="drag-helper" :transitionDuration="0" :lockToContainerEdges="true" :pressDelay="350" @input="sortEnd" lockAxis="y" v-model="todoList">
+                <div class="todo-list list-list" id="todolist">
+                    <SlickList :shouldCancelStart="cancelSort" @sort-start="sortStart($event)" helperClass="drag-helper" :transitionDuration="0" :lockToContainerEdges="true" :pressDelay="350" @input="sortEnd" lockAxis="y" v-model="todoList">
                     <SlickItem v-on:dblclick.native="changeTitle(item)" :style="{height: item.itemSize+'px'}" :index="index" class="item" :class="{'show': item.show}" v-for="(item, index) in todoList" :key="item.ID">
                     <div class="item-checkbox">
                         <i v-if="!item.Complete" class="fas fa-square" @click="completeItem(item)"></i>
@@ -207,7 +207,7 @@
                 <div class="show-completed" v-if="completedToDoList.length > 0">
                     <div class="button" @click="showCompletedList = !showCompletedList">
                         <span v-if="!showCompletedList">show</span><span v-else>hide</span> 
-                        completed to-do's
+                        completed ({{ completedToDoList.length }})
                     </div>
                 </div>
                 <div class="todo-list complete-list" v-if="showCompletedList">
@@ -246,6 +246,7 @@
                             <md-button class="md-accent md-raised" @click="clearTime(item);">Clear</md-button>
                         </div>
                     </div>
+                    <md-button class="md-accent md-raised" @click="clearCompleted();">Clear Completed</md-button>
                 </div>
                 <div v-if="activelist != undefined && activelist != ''">
                     <md-dialog-confirm
@@ -336,7 +337,7 @@ export default {
                     if(that.loggedIn) {
                         that.periodcalUpdate();
                     }
-                }, 2000);
+                }, 5000);
             }
         } else {
             // Check if admin has been created.
@@ -519,11 +520,25 @@ export default {
                        if (that.activelist.Share == null) {
                            that.activelist.Share = [];
                        }
-                       console.log(userData);
                        if (userData != "") {
                            that.activelist.Share.push(userData);
                        }
                        that.shareWithUser = "";
+                   },
+                   error: that.handleError
+            });
+        },
+        // Clear completed items for list 
+        clearCompleted() {
+            var that = this;
+            $.ajax({
+                   type: "POST",
+                   url: "/api/deletecompleted",
+                   data: JSON.stringify(this.activelist),
+                   beforeSend: that.setHeader,
+                   success: function() {
+                       that.selectList(that.activelist);
+                       that.showCompletedList = false;
                    },
                    error: that.handleError
             });
@@ -683,8 +698,16 @@ export default {
             });
             this.newListName = "";
         },
+        // Dont allow dragging while having date selector up
+        cancelSort() {
+            if ($(".vdatetime-popup").length != 0) {
+                return true;
+            }
+            return false;
+        },
         // Sorting event for moving an item in the list
         sortStart() {
+            // Do not trigger drag if we have date selector up
             let newCanvas = document.querySelector('.drag-helper')
             var text = newCanvas.innerText;
             newCanvas.innerHTML = "<div style="+
@@ -767,12 +790,12 @@ export default {
             $('#inp_'+item.ID).keyup(function(e){
                 // Cancel
                 if (e.keyCode == 27) {
-                    $('#'+item.ID).html(item.Title);
+                    $('#'+item.ID).text(item.Title);
                 }
                 // Save
                 if(e.keyCode == 13) {
                     item.Title = $('#inp_'+item.ID).val();
-                    $('#'+item.ID).html(item.Title);
+                    $('#'+item.ID).text(item.Title);
                     that.saveItem(item);
                 }
             });
@@ -1118,7 +1141,7 @@ export default {
             &::before {
                 content: '';
                 position: absolute;
-                top: 30px;
+                top: 20px;
                 width: calc(100% - 120px);
                 margin: 0 40px;
                 border-bottom: 2px solid #555;

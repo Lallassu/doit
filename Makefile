@@ -1,4 +1,4 @@
-dev: prepare
+dev: clean prepare
 	cp -r doit/dist backend/dist
 	cd backend && go run . -tlscert server.crt -tlskey server.key -hostport 0.0.0.0:8443
 
