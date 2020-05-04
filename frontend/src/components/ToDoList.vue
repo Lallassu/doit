@@ -314,6 +314,7 @@ export default {
             lists: [],
             todoList: [],
             completedToDoList: [],
+            isSorting: false,
             showCompletedList: false
         }
     },
@@ -589,6 +590,7 @@ export default {
                 localStorage.clear();
                 window.location.reload();
             }
+            window.location.reload();
         },
         // Set the token in the header for a request
         setHeader(request) {
@@ -647,7 +649,7 @@ export default {
         },
         // Check if there have been any updates to current list
         periodcalUpdate() {
-            if(this.activelist == undefined || this.activelist == "") {
+            if(this.activelist == undefined || this.activelist == "" || this.isSorting) {
                 return;
             }
             var that = this;
@@ -707,7 +709,7 @@ export default {
         },
         // Sorting event for moving an item in the list
         sortStart() {
-            // Do not trigger drag if we have date selector up
+            this.isSorting = true;
             let newCanvas = document.querySelector('.drag-helper')
             var text = newCanvas.innerText;
             newCanvas.innerHTML = "<div style="+
@@ -724,6 +726,7 @@ export default {
         },
         // Sorting event end for moving an item in the list
         sortEnd(a) {
+            this.isSorting = false;
             var sortOrder = [];
             for(var i = 0; i < a.length; i++) {
                 sortOrder.push({"id": a[i].ID, "order": i})
