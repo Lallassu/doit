@@ -246,7 +246,7 @@
                             <md-button class="md-accent md-raised" @click="clearTime(item);">Clear</md-button>
                         </div>
                     </div>
-                    <md-button class="md-accent md-raised" @click="clearCompleted();">Clear Completed</md-button>
+                    <md-button v-if="completedToDoList.length > 0" class="md-accent md-raised" @click="clearCompleted();">Clear Completed</md-button>
                 </div>
                 <div v-if="activelist != undefined && activelist != ''">
                     <md-dialog-confirm
@@ -315,7 +315,9 @@ export default {
             todoList: [],
             completedToDoList: [],
             isSorting: false,
-            showCompletedList: false
+            showCompletedList: false,
+            showingNote: false,
+            showingAlarm: false
         }
     },
     components: {
@@ -648,7 +650,11 @@ export default {
         },
         // Check if there have been any updates to current list
         periodcalUpdate() {
-            if(this.activelist == undefined || this.activelist == "" || this.isSorting) {
+            if(this.activelist == undefined
+               || this.activelist == ""
+               || this.isSorting 
+               || this.showingNote 
+               || this.showingAlarm ) {
                 return;
             }
             var that = this;
@@ -657,6 +663,13 @@ export default {
                    beforeSend: that.setHeader,
                    url: "/api/refresh/"+that.activelist.ID+"/"+that.lastUpdate,
                    success: function(data) {
+                       if(that.activelist == undefined
+                          || that.activelist == ""
+                          || that.isSorting 
+                          || that.showingNote 
+                          || that.showingAlarm ) {
+                           return;
+                       }
                        if (data == "update") {
                            that.selectList(that.activelist);
                        }
@@ -885,6 +898,7 @@ export default {
         },
         // Show the note for an item
         showNote(item) {
+            this.showingNote = !this.showingNote;
             item.showNote = !item.showNote;
             item.alarm = false;
             item.showTime = false;
@@ -929,6 +943,7 @@ export default {
         },
         // Show the alarm settings
         showTime(item) {
+            this.showingAlarm = !this.showingAlarm;
             item.showTime = !item.showTime;
             item.showNote = false;
             if (item.showTime) {
