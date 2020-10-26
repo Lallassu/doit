@@ -329,6 +329,7 @@ export default {
         if (localStorage.token != "" && localStorage.token != undefined) {
             this.loggedIn = true;
             this.account = JSON.parse(localStorage.getItem('account'));
+            this.selectList(JSON.parse(localStorage.getItem('activelist')));
 
             if(this.account.Admin == true) {
                 this.fetchAdminItems();
@@ -572,24 +573,22 @@ export default {
                    type: "POST",
                    url: "/api/logout",
                    beforeSend: that.setHeader,
-                   success: function() {
-                       that.loggedIn = false;
-                       that.account = "";
-                       localStorage.clear();
-                       $('#app').css("max-width", "768px");
-                       $('#app').css("width", "100%");
-                   },
-                   error: that.handleError
             });
+            that.loggedIn = false;
+            that.account = "";
+            localStorage.clear();
+            $('#app').css("max-width", "768px");
+            $('#app').css("width", "100%");
         },
         // Handle any error from backend
         handleError(err) {
-            this.errorText = err;
-            if(err.status == 401) {
-                this.loggedIn = false;
-                localStorage.clear();
-                window.location.reload();
-            }
+            console.log(err);
+            //this.errorText = err;
+            //if(err.status == 401) {
+            //    this.loggedIn = false;
+            //    localStorage.clear();
+            //    window.location.reload();
+            //}
             window.location.reload();
         },
         // Set the token in the header for a request
@@ -750,6 +749,7 @@ export default {
             }
             this.activelist = list;
             var that = this;
+            localStorage.setItem('activelist', JSON.stringify(list));
 
             $.ajax({
                    type: "GET",
@@ -767,6 +767,7 @@ export default {
 
                        that.todoList = [];
                        that.completedToDoList = [];
+                       var completed = [];
 
                        that.activelist.Items = [];
                        for(var k in data) {
@@ -778,10 +779,15 @@ export default {
                            if(!v.Complete) {
                                that.todoList.push(v);
                            } else {
-                               that.completedToDoList.push(v);
+                               completed.push(v); 
                            }
                            that.activelist.Items.push(v);
                        }
+                       // Sort completed.
+                       completed.sort(function(a,b){
+                           return b.Completed - a.Completed;
+                       });
+                       that.completedToDoList = completed;
                    },
                    error: that.handleError
             });
@@ -850,6 +856,7 @@ export default {
                     Time: "",
                     ListId: "",
                     Title: this.entry,
+                    Completed: 0,
                     Complete: false,
                     showNote: false,
                     showTime: false,
