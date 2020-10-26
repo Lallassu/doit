@@ -38,6 +38,7 @@ type Item struct {
 	Title        string
 	Note         string
 	Complete     bool
+	Completed    int
 	Time         string
 	ReminderSent bool
 	AccountID    uint // could be a co-creator

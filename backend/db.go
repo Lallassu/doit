@@ -254,6 +254,9 @@ func (d *DB) UpdateItem(l *Item, acc *Account) {
 		if l.Time != item.Time {
 			l.ReminderSent = false
 		}
+		if l.Complete {
+			l.Completed = int(time.Now().UTC().Unix())
+		}
 		d.db.Unscoped().Save(l)
 	}
 }
