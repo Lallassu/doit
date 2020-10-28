@@ -194,6 +194,7 @@
                         </md-field>
                         <md-button class="md-primary md-raised" @click="saveNote(item)">Save</md-button>
                         <md-button class="md-accent md-raised" @click="showNote(item)">Cancel</md-button>
+                        <span style="display: none;" :id="'autosave'+item.ID" class="autosaved">Auto saved.</span>
                     </div>
                     <div class="item-alarm" v-if="item.showTime">
                         <datetime class="vdatetime-input" type="datetime" v-model="item.Time"></datetime>
@@ -340,6 +341,12 @@ export default {
                 setInterval(function() {
                     if(that.loggedIn) {
                         that.periodcalUpdate();
+                    }
+                }, 5000);
+
+                setInterval(function() {
+                    if(that.loggedIn) {
+                        that.saveActiveNotes();
                     }
                 }, 5000);
             }
@@ -648,6 +655,18 @@ export default {
                 });
             }
         },
+        // Save active notes periodically
+        saveActiveNotes() {
+            for(var i = 0; i < this.todoList.length; i++) {
+                if(this.todoList[i].showNote) {
+                    if (this.todoList[i].changed) {
+                        this.saveItem(this.todoList[i]);
+                        $("#autosave"+this.todoList[i].ID).show();
+                        $("#autosave"+this.todoList[i].ID).fadeOut(2000);
+                    }
+                }
+            }
+        },
         // Check if there have been any updates to current list
         periodcalUpdate() {
             if(this.activelist == undefined
@@ -788,6 +807,7 @@ export default {
                            v.showNote = false;
                            v.showTime = false;
                            v.show = true;
+                           v.changed = false;
 
                            if(!v.Complete) {
                                that.todoList.push(v);
@@ -908,11 +928,12 @@ export default {
                 item.itemSize = 40;
             }
         },
-        noteInput() {
-            // TBD: Save each entry...? "auto saved.." timer?
+        noteInput(item) {
+            item.changed = true;
         },
         // Save an item with any changes made
         saveItem(item) {
+            item.changed = false;
             var that = this;
             $.ajax({
                    type: "PUT",
@@ -920,7 +941,6 @@ export default {
                    url: "/api/item",
                    data: item,
                    success: function() {
-                       that.selectList(that.activelist);
                    },
                    error: that.handleError
             });
@@ -1436,6 +1456,13 @@ export default {
 .adminText {
     color: #FF5555;
     text-decoration: bold;
+}
+
+.autosaved {
+    color: #333333;
+    text-decoration: bold;
+    margin-top: 2px;
+    font-size: 8px;
 }
 
 </style>
