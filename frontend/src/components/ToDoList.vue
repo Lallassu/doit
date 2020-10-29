@@ -660,7 +660,8 @@ export default {
             for(var i = 0; i < this.todoList.length; i++) {
                 if(this.todoList[i].showNote) {
                     if (this.todoList[i].changed) {
-                        this.saveItem(this.todoList[i]);
+                        this.showingNote = true;
+                        this.saveItem(this.todoList[i], false);
                         $("#autosave"+this.todoList[i].ID).show();
                         $("#autosave"+this.todoList[i].ID).fadeOut(2000);
                     }
@@ -838,7 +839,7 @@ export default {
                 if(e.keyCode == 13) {
                     item.Title = $('#inp_'+item.ID).val();
                     $('#'+item.ID).text(item.Title);
-                    that.saveItem(item);
+                    that.saveItem(item, false);
                 }
             });
         },
@@ -932,7 +933,7 @@ export default {
             item.changed = true;
         },
         // Save an item with any changes made
-        saveItem(item) {
+        saveItem(item, reload) {
             item.changed = false;
             var that = this;
             $.ajax({
@@ -941,24 +942,27 @@ export default {
                    url: "/api/item",
                    data: item,
                    success: function() {
+                       if (reload) {
+                           that.selectList(that.activelist);
+                       }
                    },
                    error: that.handleError
             });
         },
         // Save a note for an item
         saveNote(item) {
-            this.saveItem(item);
+            this.saveItem(item, false);
             this.showNote(item);
         },
         // Save a alarm for an item
         saveTime(item) {
-            this.saveItem(item);
+            this.saveItem(item, false);
             this.showTime(item);
         },
         // Clear the alarm for an item
         clearTime(item) {
             item.Time = "";
-            this.saveItem(item);
+            this.saveItem(item,false);
             this.showTime(item);
         },
         // Show the alarm settings
@@ -976,13 +980,13 @@ export default {
         completeItem(item) {
             item.Complete = !item.Complete;
             item.show = false;
-            this.saveItem(item);
+            this.saveItem(item, true);
         },
         // Mark an item as not complete
         uncompleteItem(item) {
             item.Complete = !item.Complete;
             item.show = false;
-            this.saveItem(item);
+            this.saveItem(item, true);
         } 
     }
 }
