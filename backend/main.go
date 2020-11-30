@@ -25,6 +25,7 @@ func main() {
 
 	hostPort := flag.String("hostport", "localhost:8443", "host:port to run webserver on.")
 	database := flag.String("database", "doit.db", "SQLite database file.")
+	frontend := flag.String("frontend", "./dist", "Path to frontend dist dir.")
 	tlsCert := flag.String("tlscert", "server.crt", "TLS certificate")
 	skipTLS := flag.Bool("skiptls", false, "Skip using TLS, PWA will not be available")
 	tlsKey := flag.String("tlskey", "server.key", "TLS key")
@@ -83,7 +84,7 @@ func main() {
 		}
 	}()
 
-	router.Use(static.Serve("/", static.LocalFile("./dist", false)))
+	router.Use(static.Serve("/", static.LocalFile(*frontend, false)))
 
 	router.GET("/hasadm", func(c *gin.Context) {
 		if ok := db.HasAdminAccount(); ok {
@@ -274,7 +275,6 @@ func main() {
 	api.POST("/sort", func(c *gin.Context) {
 		items := []Item{}
 		if err := c.BindJSON(&items); err == nil {
-			// TBD: Check if we own items.
 			db.UpdateSortOrder(items)
 			c.JSON(http.StatusOK, nil)
 		}

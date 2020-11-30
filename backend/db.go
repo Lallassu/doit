@@ -193,9 +193,14 @@ func (d *DB) AllLists(acc *Account) []List {
 }
 
 func (d *DB) UpdateSortOrder(l []Item) {
-	for _, item := range l {
-		d.db.Unscoped().Model(&item).Update("order", item.Order)
-	}
+	d.db.Transaction(func(tx *gorm.DB) error {
+		for _, item := range l {
+			if err := tx.Model(&item).Update("order", item.Order).Error; err != nil {
+				return fmt.Errorf("failed update order of items")
+			}
+		}
+		return nil
+	})
 }
 
 func (d *DB) LastUpdate(id int) time.Time {

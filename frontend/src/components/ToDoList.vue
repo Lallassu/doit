@@ -593,11 +593,11 @@ export default {
         handleError(err) {
             console.log(err);
             //this.errorText = err;
-            //if(err.status == 401) {
-            //    this.loggedIn = false;
-            //    localStorage.clear();
-            //    window.location.reload();
-            //}
+            if(err.status == 401) {
+                this.loggedIn = false;
+                localStorage.clear();
+                window.location.reload();
+            }
             window.location.reload();
         },
         // Set the token in the header for a request
