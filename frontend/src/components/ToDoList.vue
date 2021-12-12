@@ -693,11 +693,6 @@ export default {
                        if (data == "update") {
                            that.selectList(that.activelist);
                        }
-
-                       if (that.errorText != "") {
-                           that.errorText = "";
-                           window.location.reload();
-                       }
                    },
                    error: that.handleError
             });
