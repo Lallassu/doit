@@ -33,14 +33,17 @@ type List struct {
 
 type Item struct {
 	gorm.Model
-	Order        int
-	ListId       int
-	Title        string
-	Note         string
-	Complete     bool
-	Completed    int
-	Time         string
-	ReminderSent bool
-	AccountID    uint // could be a co-creator
-	Account      Account
+	Order           int
+	ListId          int
+	Title           string
+	Note            string
+	Complete        bool
+	Completed       int
+	Time            string
+	ReminderSent    bool
+	RecurDays       int  // 0 = no recurrence, >0 = repeat every N days
+	PreAlarmMinutes int  // 0 = no pre-alarm, >0 = minutes before
+	PreAlarmSent    bool // track if pre-alarm was sent
+	AccountID       uint // could be a co-creator
+	Account         Account
 }

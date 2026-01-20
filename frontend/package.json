@@ -1,52 +1,26 @@
 {
   "name": "doit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "core-js": "^3.6.4",
-    "jquery": "^3.5.0",
-    "luxon": "^2.5.2",
-    "node-sass": "^7.0.0",
-    "sass-loader": "^8.0.2",
-    "vue": "^2.6.11",
-    "vue-burger-menu": "^2.0.5",
-    "vue-datetime": "^1.0.0-beta.11",
-    "vue-material": "^1.0.0-beta-11",
-    "vue-slicksort": "^1.1.3",
-    "webpack": "^5.94.0",
-    "weekstart": "^1.0.1"
+    "vue": "^3.5.13",
+    "primevue": "^4.3.3",
+    "primeicons": "^7.0.0",
+    "@primeuix/themes": "^1.0.0",
+    "@vuepic/vue-datepicker": "^12.1.0",
+    "vuedraggable": "^4.1.0",
+    "sortablejs": "^1.15.6",
+    "luxon": "^3.5.0"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.3.0",
-    "@vue/cli-plugin-eslint": "~4.3.0",
-    "@vue/cli-service": "~4.3.0",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^6.2.2",
-    "vue-template-compiler": "^2.6.11"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "babel-eslint"
-    },
-    "rules": {}
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ]
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.3.5",
+    "sass": "^1.89.0"
+  }
 }

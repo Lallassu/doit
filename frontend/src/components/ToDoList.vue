@@ -1,1467 +1,1183 @@
 <template>
-    <div class="container">
-        <div v-if="errorText != ''">
-            <span class="error">Something went wrong: {{ errorText }}
-                <br>
-                Please reload page.
-            </span>
-        </div>
-        <div v-if="errorText == ''">
-            <div v-if="account.Admin">
-                <div>
-                    <md-button class="md-default md-raised" id="adm-logout-btn" @click="logout()">Logout</md-button>
-                    <span class="adminText">You are admin.</span>
-                    <md-table v-model="accounts" md-sort="user" md-sort-order="asc" md-card>
-                        <md-table-toolbar>
-                            <h1 class="md-title">Accounts</h1>
-                        </md-table-toolbar>
-                        <md-table-row slot="md-table-row" slot-scope="{ item }">
-                            <md-table-cell md-label="ID" md-numeric>{{ item.ID }}</md-table-cell>
-                            <md-table-cell md-label="user" md-sort-by="name">{{ item.User }}</md-table-cell>
-                            <md-table-cell md-label="email" md-sort-by="email">{{ item.Email }}</md-table-cell>
-                            <md-table-cell md-label="admin" md-sort-by="admin">{{ item.Admin }}</md-table-cell>
-                            <md-table-cell md-label="validated" md-sort-by="validated">{{ item.Validated }}</md-table-cell>
-                            <md-table-cell md-label="updated" md-sort-by="updated">{{ item.CreatedAt }}</md-table-cell>
-                            <md-table-cell md-label="created" md-sort-by="created">{{ item.UpdatedAt }}</md-table-cell>
-                            <md-table-cell v-if="!item.Validated" md-label="validate"><md-button id="validate-btn" class="md-default md-raised" @click="validateAccount(item.ID)">Validate</md-button></md-table-cell>
-                            <md-table-cell v-if="!item.Admin" md-label="remove"><md-button id="remove-btn" class="md-default md-raised" @click="removeAccount(item.ID)">Remove</md-button></md-table-cell>
-                        </md-table-row>
-                    </md-table>
-                </div>
-                <div>
-                    <md-table v-model="tokens" md-sort="created" md-sort-order="asc" md-card>
-                        <md-table-toolbar>
-                            <h1 class="md-title">Tokens</h1>
-                        </md-table-toolbar>
-                        <md-table-row slot="md-table-row" slot-scope="{ item }">
-                            <md-table-cell md-label="ID" md-numeric>{{ item.ID }}</md-table-cell>
-                            <md-table-cell md-label="Account" md-sort-by="account">{{ item.Account.User }}</md-table-cell>
-                            <md-table-cell md-label="Token" md-sort-by="token">{{ item.Token }}</md-table-cell>
-                            <md-table-cell md-label="created" md-sort-by="created">{{ item.CreatedAt }}</md-table-cell>
-                            <md-table-cell md-label="revoke"><md-button id="remove-btn" class="md-default md-raised" @click="revokeToken(item.ID)">Revoke</md-button></md-table-cell>
-                        </md-table-row>
-                    </md-table>
-                </div>
-            </div>
-            <div id="signupdiv" v-if="createadm || createNewAcc">
-                <span v-if="createadm" class="adminText"> This will create the admin account!</span>
-                <div id="user" class="user-login">
-                    <div class="user-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <form>
-                        <input type="text" placeholder="Username" v-model="username">
-                    </form>
-                </div>
-                <div id="pass" class="user-login">
-                    <div class="user-icon">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <form>
-                        <input type="text" placeholder="email@example.com" v-model="email">
-                    </form>
-                </div>
-                <div id="pass" class="user-login">
-                    <div class="pass-icon">
-                        <i class="fas fa-key"></i>
-                    </div>
-                    <form>
-                        <input type="password" placeholder="Password" v-model="password">
-                    </form>
-                </div>
-                <div id="pass" class="user-login">
-                    <div class="pass-icon">
-                        <i class="fas fa-key"></i>
-                    </div>
-                    <form>
-                        <input placeholder="Repeat password..." v-on:keyup.enter="signup()" type="password" v-model="password2">
-                    </form>
-                </div>
-                <md-button class="md-primary md-raised login-btn" @click="signup()">Create Account</md-button>
-            </div>
-            <div id="logindiv" v-if="!loggedIn && !createadm && !createNewAcc">
-                <div id="user" class="user-login">
-                    <div class="user-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <form>
-                        <input v-on:keyup.enter="login()" type="text" placeholder="User" v-model="username">
-                    </form>
-                </div>
-                <div id="pass" class="user-login">
-                    <div class="pass-icon">
-                        <i class="fas fa-key"></i>
-                    </div>
-                    <form @submit.prevent>
-                        <input v-on:keyup.enter="login()" type="password" placeholder="Password" v-model="password">
-                    </form>
-                </div>
-                <md-button class="md-primary md-raised login-btn" @click="login()">Login</md-button>
-                <md-button id="signup-btn" class="md-primary signup-btn" @click="createNewAcc = true">Sign Up</md-button>
-            </div>
-            <div v-if="loggedIn && !account.Admin">
-                <Slide :closeOnNavigation="true" >
-                <md-dialog-prompt
-                    :md-active.sync="newListActive"
-                    v-model="newListValue"
-                    md-title="New List Name"
-                    md-inp2t-maxlength="20"
-                    @md-confirm="newList"
-                    md-confirm-text="Create"/>
-                    <md-button class="md-primary md-raised" @click="newListActive = true">New List</md-button>
-                    <div v-for="item in lists" :key="item.ID">
-                        <a href="#"> 
-                            <span class="list-menu-item" @click="selectList(item)">{{ item.Name }}<span v-if="item.ID == account.Favorite" class="fa fa-star fav-size"> </span></span>
-                        </a>
-                    </div>
-                    <span style="font-size: 0.8rem;">Logged in as <span style="font-size: 0.8rem; color: #fff;">{{ account.User }}</span></span>
-                    <md-button class="md-default md-raised" @click="logout()">Logout</md-button>
-                </Slide>
-                <div v-if="nolists"> 
-                    <md-button class="md-primary md-raised" @click="newListActive = true">Create your first list</md-button>
-                </div>
-                <div id="listid" class="list-name" v-if="activelist">
-                    <div class="button">
-                        <md-dialog-prompt
-                            :md-active.sync="listActive"
-                            v-model="newListName"
-                            md-title="Change List Name"
-                            md-input-maxlength="20"
-                            @md-confirm="changeListName"
-                            md-confirm-text="Update"/>
-
-                            <md-button id="changeListName" class="md-primary" @click="listActive = true">{{ activelist.Name }} </md-button>
-                            <md-button class="md-primary" id="delete-btn" @click="showDeleteList = true"><span class="fa fa-trash"></span></md-button>
-                            <md-button class="md-primary" id="share-btn" @click="showShareList = true"><span class="fa fa-user-plus"></span></md-button>
-                            <md-button @click="setFavorite()" id="fav-btn" class="md-primary" :class="{'fav-btn-active': activelist.Favorite == true}"><span class="fa fa-star"></span></md-button>
-                            <md-button id="addToHome" class="md-primary md-raised"><span class="fa fa-mobile-alt"></span></md-button>
-
-
-                            <md-dialog-confirm
-                                :md-active.sync="showDeleteList"
-                                md-title="Delete List?"
-                                md-content="This will remove the list AND all items in the list, are you really sure?"
-                                @md-confirm="deleteList()"
-                                md-confirm-text="Delete"/>
-
-                                <md-dialog-prompt
-                                    :md-active.sync="showShareList"
-                                    v-model="shareWithUser"
-                                    md-title="Share List With User"
-                                    md-content="Enter the e-mail or user you want to share this list with?"
-                                    md-inp2t-maxlength="20"
-                                    @md-confirm="shareList()"
-                                    md-confirm-text="Share"/>
-                    </div>
-                </div>
-                <div class="add-item" v-if="!errorText && activelist">
-                    <div class="add-icon" @click="addItem">
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <form @submit.prevent="addItem">
-                        <input type="text" placeholder="Add..." v-model="entry">
-                    </form>
-                </div>
-                <div>
-                </div>
-                <div class="todo-list list-list" id="todolist">
-                    <SlickList :shouldCancelStart="cancelSort" @sort-start="sortStart($event)" helperClass="drag-helper" :transitionDuration="0" :lockToContainerEdges="true" :pressDelay="350" @input="sortEnd" lockAxis="y" v-model="todoList">
-                    <SlickItem v-on:dblclick.native="changeTitle(item)" :style="{height: item.itemSize+'px'}" :index="index" class="item" :class="{'show': item.show}" v-for="(item, index) in todoList" :key="item.ID">
-                    <div class="item-checkbox">
-                        <i v-if="!item.Complete" class="fas fa-square" @click="completeItem(item)"></i>
-                        <i v-else class="fas fa-check-square"></i>
-                    </div>
-                    <div class="item-title" :id="item.ID">
-                        {{ item.Title }} 
-                    </div>
-                    <div class="item-owner" v-if="activelist.Share != null && activelist.Share.length > 0">
-                        <span style="margin-right: 10px; font-size: 0.7rem; color: #888;"> [{{item.Account.User}}]</span>
-                    </div>
-                    <div class="feature-icon-copy">
-                        <i class="fas fa-copy" @click="copy(item);"></i>
-                    </div>
-                    <div class="feature-icon" :class="{'red-bg': item.Note.length > 0}">
-                        <i class="fas fa-pen" @click="showNote(item);"></i>
-                    </div>
-                    <div class="feature-icon-bell" :class="{'red-bg': item.Time.length > 0}">
-                        <i class="fas fa-bell" @click="showTime(item)"></i>
-                    </div>
-
-                    <div class="item-note" v-if="item.showNote">
-                        <md-field>
-                            <label>Note</label>
-                            <md-textarea v-model="item.Note" @input="noteInput(item)"></md-textarea>
-                        </md-field>
-                        <md-button class="md-primary md-raised" @click="saveNote(item)">Save</md-button>
-                        <md-button class="md-accent md-raised" @click="showNote(item)">Cancel</md-button>
-                        <span style="display: none;" :id="'autosave'+item.ID" class="autosaved">Auto saved.</span>
-                    </div>
-                    <div class="item-alarm" v-if="item.showTime">
-                        <datetime class="vdatetime-input" type="datetime" v-model="item.Time"></datetime>
-                        <br>
-                        <md-button class="md-primary md-raised" @click="saveTime(item)">Set Alarm</md-button>
-                        <md-button class="md-accent md-raised" @click="clearTime(item);">Clear</md-button>
-                    </div>
-                    </SlickItem>
-                    </SlickList>
-                </div>
-                <div class="show-completed" v-if="completedToDoList.length > 0">
-                    <div class="button" @click="showCompletedList = !showCompletedList">
-                        <span v-if="!showCompletedList">show</span><span v-else>hide</span> 
-                        completed ({{ completedToDoList.length }})
-                    </div>
-                </div>
-                <div class="todo-list complete-list" v-if="showCompletedList">
-                    <div :style="{height: item.itemSize+'px'}" class="item" :class="{'show': item.show}" v-for="item in completedToDoList" :key="item.ID">
-                        <div class="item-checkbox">
-                            <i v-if="!item.Complete" class="fas fa-square"></i>
-                            <i v-else class="fas fa-check-square" @click="uncompleteItem(item)"></i>
-                        </div>
-                        <div class="item-title">
-                            {{ item.Title }}
-                        </div>
-                        <div class="item-owner" v-if="activelist.Share != null && activelist.Share.length > 0">
-                            <span style="margin-right: 10px; font-size: 0.7rem; color: #888;"> [{{item.Account.User}}]</span>
-                        </div>
-                        <div class="feature-icon-copy">
-                            <i class="fas fa-copy" @click="copy(item);"></i>
-                        </div>
-                        <div class="feature-icon" :class="{'red-bg': item.Note.length > 0}">
-                            <i class="fas fa-pen" @click="showNote(item);"></i>
-                        </div>
-                        <div class="feature-icon-bell" :class="{'red-bg': item.Time.length > 0}">
-                            <i class="fas fa-bell" @click="showTime(item)"></i>
-                        </div>
-                        <div class="item-note" v-if="item.showNote">
-                            <md-field>
-                                <label>Note</label>
-                                <md-textarea v-model="item.Note" @input="noteInput(item)"></md-textarea>
-                            </md-field>
-                            <md-button class="md-primary md-raised" @click="saveNote(item)">Save</md-button>
-                            <md-button class="md-accent md-raised" @click="showNote(item)">Cancel</md-button>
-                        </div>
-                        <div class="item-alarm" v-if="item.showTime">
-                            <datetime class="vdatetime-input" type="datetime" v-model="item.Time"></datetime>
-                            <br>
-                            <md-button class="md-primary md-raised" @click="saveTime(item)">Set Alarm</md-button>
-                            <md-button class="md-accent md-raised" @click="clearTime(item);">Clear</md-button>
-                        </div>
-                    </div>
-                    <md-button v-if="completedToDoList.length > 0" class="md-accent md-raised" @click="clearCompleted();">Clear Completed</md-button>
-                </div>
-                <div v-if="activelist != undefined && activelist != ''">
-                    <md-dialog-confirm
-                        :md-active.sync="showRemoveShareList"
-                        v-model="removeUser"
-                        md-title="Remove Share?"
-                        md-content="This will the user from shared list, are you really sure?"
-                        @md-confirm="removeUserShare()"
-                        md-confirm-text="Remove"/>
-                        <div style="margin-top: 20px;" v-if="activelist.Share != null">
-                            <div v-if="activelist.Share.length > 0 ">
-                                <md-button class="md-primary" id="owner-btn"><span class="fa fa-user"> {{activelist.Account.User}}</span></md-button>
-                                <span :index="index" v-for="(item, index) in activelist.Share" :key="item.ID">
-                                    <md-button @click="removeUser=item; showRemoveShareList = true" class="md-primary" id="shared-btn"><span class="fa fa-users"> {{item.User}} </span></md-button>
-                                </span>
-                            </div>
-                        </div>
-                </div>
-            </div>
-        </div>
+  <div class="container">
+    <div v-if="errorText">
+      <span class="error">Something went wrong: {{ errorText }}<br>Please reload page.</span>
     </div>
+
+    <div v-else>
+      <!-- Admin View -->
+      <div v-if="account.Admin">
+        <Button label="Logout" severity="danger" size="small" @click="logout()" />
+        <span class="admin-text">You are admin.</span>
+
+        <DataTable :value="accounts" stripedRows class="mt-3">
+          <template #header>
+            <h3>Accounts</h3>
+          </template>
+          <Column field="ID" header="ID" />
+          <Column field="User" header="User" />
+          <Column field="Email" header="Email" />
+          <Column field="Admin" header="Admin" />
+          <Column field="Validated" header="Validated" />
+          <Column header="Actions">
+            <template #body="{ data }">
+              <Button v-if="!data.Validated" label="Validate" severity="success" size="small" @click="validateAccount(data.ID)" class="mr-1" />
+              <Button v-if="!data.Admin" label="Remove" severity="danger" size="small" @click="removeAccount(data.ID)" />
+            </template>
+          </Column>
+        </DataTable>
+
+        <DataTable :value="tokens" stripedRows class="mt-3">
+          <template #header>
+            <h3>Tokens</h3>
+          </template>
+          <Column field="ID" header="ID" />
+          <Column field="Account.User" header="Account" />
+          <Column field="Token" header="Token" />
+          <Column header="Actions">
+            <template #body="{ data }">
+              <Button label="Revoke" severity="danger" size="small" @click="revokeToken(data.ID)" />
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+
+      <!-- Signup Form -->
+      <div v-if="createadm || createNewAcc" class="auth-form">
+        <span v-if="createadm" class="admin-text">This will create the admin account!</span>
+        <div class="form-field">
+          <i class="fas fa-user"></i>
+          <InputText v-model="username" placeholder="Username" />
+        </div>
+        <div class="form-field">
+          <i class="fas fa-envelope"></i>
+          <InputText v-model="email" placeholder="email@example.com" />
+        </div>
+        <div class="form-field">
+          <i class="fas fa-key"></i>
+          <InputText v-model="password" type="password" placeholder="Password" />
+        </div>
+        <div class="form-field">
+          <i class="fas fa-key"></i>
+          <InputText v-model="password2" type="password" placeholder="Repeat password..." @keyup.enter="signup()" />
+        </div>
+        <Button label="Create Account" @click="signup()" class="w-full" />
+      </div>
+
+      <!-- Login Form -->
+      <div v-if="!loggedIn && !createadm && !createNewAcc" class="auth-form">
+        <div class="form-field">
+          <i class="fas fa-user"></i>
+          <InputText v-model="username" placeholder="User" @keyup.enter="login()" />
+        </div>
+        <div class="form-field">
+          <i class="fas fa-key"></i>
+          <InputText v-model="password" type="password" placeholder="Password" @keyup.enter="login()" />
+        </div>
+        <Button label="Login" @click="login()" class="w-full" />
+        <Button label="Sign Up" link @click="createNewAcc = true" class="w-full mt-2" />
+      </div>
+
+      <!-- Main App View -->
+      <div v-if="loggedIn && !account.Admin">
+        <!-- Sidebar Menu -->
+        <Button icon="pi pi-bars" @click="sidebarVisible = true" class="menu-btn" />
+        <Drawer v-model:visible="sidebarVisible" header="Menu" class="sidebar-menu">
+          <Button label="New List" @click="newListDialogVisible = true" class="w-full mb-3" />
+          <div v-for="item in lists" :key="item.ID" class="list-menu-item" @click="selectList(item); sidebarVisible = false">
+            {{ item.Name }}
+            <i v-if="item.ID === account.Favorite" class="fas fa-star fav-icon"></i>
+          </div>
+          <div class="sidebar-footer">
+            <span class="logged-in-text">Logged in as {{ account.User }}</span>
+            <Button label="Logout" severity="secondary" size="small" @click="logout()" />
+          </div>
+        </Drawer>
+
+        <!-- New List Dialog -->
+        <Dialog v-model:visible="newListDialogVisible" header="New List Name" modal>
+          <InputText v-model="newListValue" placeholder="List name" class="w-full" @keyup.enter="newList()" />
+          <template #footer>
+            <Button label="Cancel" severity="secondary" @click="newListDialogVisible = false" />
+            <Button label="Create" @click="newList()" />
+          </template>
+        </Dialog>
+
+        <!-- No Lists Message -->
+        <div v-if="nolists" class="text-center mt-4">
+          <Button label="Create your first list" @click="newListDialogVisible = true" />
+        </div>
+
+        <!-- Active List Header -->
+        <div v-if="activelist" class="list-header">
+          <span class="list-name" @click="renameListDialogVisible = true">{{ activelist.Name }}</span>
+          <i class="fas fa-trash action-btn delete-btn" @click="showDeleteList = true"></i>
+          <i class="fas fa-user-plus action-btn share-btn" @click="showShareList = true"></i>
+          <i class="fas fa-star action-btn" :class="{ 'fav-active': activelist.Favorite }" @click="setFavorite()"></i>
+        </div>
+
+        <!-- Rename List Dialog -->
+        <Dialog v-model:visible="renameListDialogVisible" header="Change List Name" modal>
+          <InputText v-model="newListName" placeholder="New name" class="w-full" @keyup.enter="changeListName()" />
+          <template #footer>
+            <Button label="Cancel" severity="secondary" @click="renameListDialogVisible = false" />
+            <Button label="Update" @click="changeListName()" />
+          </template>
+        </Dialog>
+
+        <!-- Delete List Dialog -->
+        <Dialog v-model:visible="showDeleteList" header="Delete List?" modal>
+          <p>This will remove the list AND all items in the list, are you really sure?</p>
+          <template #footer>
+            <Button label="Cancel" severity="secondary" @click="showDeleteList = false" />
+            <Button label="Delete" severity="danger" @click="deleteList()" />
+          </template>
+        </Dialog>
+
+        <!-- Share List Dialog -->
+        <Dialog v-model:visible="showShareList" header="Share List With User" modal>
+          <InputText v-model="shareWithUser" placeholder="Email or username" class="w-full" @keyup.enter="shareList()" />
+          <template #footer>
+            <Button label="Cancel" severity="secondary" @click="showShareList = false" />
+            <Button label="Share" @click="shareList()" />
+          </template>
+        </Dialog>
+
+        <!-- Add Item Input -->
+        <div v-if="activelist" class="add-item">
+          <div class="add-icon" @click="addItem()">
+            <i class="fas fa-plus"></i>
+          </div>
+          <InputText v-model="entry" placeholder="Add..." @keyup.enter="addItem()" class="add-input" />
+        </div>
+
+        <!-- Todo List -->
+        <div class="todo-list">
+          <draggable
+            v-model="todoList"
+            item-key="ID"
+            @end="onSortEnd"
+            :animation="200"
+            ghost-class="drag-ghost"
+            drag-class="drag-active"
+          >
+            <template #item="{ element: item }">
+              <div class="item" :class="{ expanded: item.showNote || item.showTime }" :style="{ minHeight: item.itemSize + 'px' }">
+                <div class="item-content">
+                  <div class="item-checkbox" @click="completeItem(item)">
+                    <i :class="item.Complete ? 'fas fa-check-square' : 'fas fa-square'"></i>
+                  </div>
+                  <div class="item-title" @dblclick="changeTitle(item)">
+                    <span v-if="!item.editing">{{ item.Title }}</span>
+                    <InputText v-else v-model="item.Title" @keyup.enter="saveTitle(item)" @keyup.esc="cancelEditTitle(item)" @blur="saveTitle(item)" class="title-input" />
+                  </div>
+                  <div v-if="activelist.Share && activelist.Share.length > 0" class="item-owner">
+                    [{{ item.Account.User }}]
+                  </div>
+                  <div class="item-actions">
+                    <i class="fas fa-copy action-icon" @click="copyItem(item)"></i>
+                    <i class="fas fa-pen action-icon" :class="{ active: item.Note.length > 0 }" @click="showNote(item)"></i>
+                    <i class="fas fa-bell action-icon" :class="{ active: item.Time.length > 0 }" @click="showTime(item)"></i>
+                  </div>
+                </div>
+
+                <!-- Note Panel -->
+                <div v-if="item.showNote" class="item-panel">
+                  <Textarea v-model="item.Note" rows="5" class="w-full" @input="item.changed = true" />
+                  <div class="panel-actions">
+                    <Button label="Save" size="small" @click="saveNote(item)" />
+                    <Button label="Cancel" severity="secondary" size="small" @click="showNote(item)" />
+                    <span class="autosave-indicator" :class="{ visible: item.autosaved }">Auto saved.</span>
+                  </div>
+                </div>
+
+                <!-- Alarm Panel -->
+                <div v-if="item.showTime" class="item-panel alarm-panel">
+                  <VueDatePicker v-model="item.dateTime" :enable-time-picker="true" :format="'yyyy-MM-dd HH:mm'" />
+                  <div class="alarm-options">
+                    <div class="alarm-option">
+                      <span class="alarm-label">Notify me</span>
+                      <InputNumber v-model="item.PreAlarmMinutes" :min="0" :showButtons="false" class="alarm-input" />
+                      <span class="alarm-unit">minutes before</span>
+                    </div>
+                    <div class="alarm-option">
+                      <span class="alarm-label">Repeat every</span>
+                      <InputNumber v-model="item.RecurDays" :min="0" :showButtons="false" class="alarm-input" />
+                      <span class="alarm-unit">days</span>
+                    </div>
+                  </div>
+                  <div class="panel-actions">
+                    <Button label="Set Alarm" size="small" @click="saveTime(item)" />
+                    <Button label="Clear" severity="secondary" size="small" @click="clearTime(item)" />
+                  </div>
+                </div>
+              </div>
+            </template>
+          </draggable>
+        </div>
+
+        <!-- Completed Toggle -->
+        <div v-if="completedToDoList.length > 0" class="show-completed-wrapper">
+          <div class="show-completed-btn" @click="showCompletedList = !showCompletedList">
+            <i :class="showCompletedList ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+            {{ showCompletedList ? 'Hide' : 'Show' }} completed ({{ completedToDoList.length }})
+          </div>
+        </div>
+
+        <!-- Completed List -->
+        <div v-if="showCompletedList" class="todo-list completed-list">
+          <div v-for="item in completedToDoList" :key="item.ID" class="item" :class="{ expanded: item.showNote || item.showTime }" :style="{ minHeight: item.itemSize + 'px' }">
+            <div class="item-content">
+              <div class="item-checkbox" @click="uncompleteItem(item)">
+                <i class="fas fa-check-square"></i>
+              </div>
+              <div class="item-title">{{ item.Title }}</div>
+              <div v-if="activelist.Share && activelist.Share.length > 0" class="item-owner">
+                [{{ item.Account.User }}]
+              </div>
+              <div class="item-actions">
+                <i class="fas fa-copy action-icon" @click="copyItem(item)"></i>
+                <i class="fas fa-pen action-icon" :class="{ active: item.Note.length > 0 }" @click="showNote(item)"></i>
+                <i class="fas fa-bell action-icon" :class="{ active: item.Time.length > 0 }" @click="showTime(item)"></i>
+              </div>
+            </div>
+
+            <div v-if="item.showNote" class="item-panel">
+              <Textarea v-model="item.Note" rows="5" class="w-full" />
+              <div class="panel-actions">
+                <Button label="Save" size="small" @click="saveNote(item)" />
+                <Button label="Cancel" severity="secondary" size="small" @click="showNote(item)" />
+              </div>
+            </div>
+
+            <div v-if="item.showTime" class="item-panel alarm-panel">
+              <VueDatePicker v-model="item.dateTime" :enable-time-picker="true" :format="'yyyy-MM-dd HH:mm'" />
+              <div class="alarm-options">
+                <div class="alarm-option">
+                  <span class="alarm-label">Notify me</span>
+                  <InputNumber v-model="item.PreAlarmMinutes" :min="0" :showButtons="false" class="alarm-input" />
+                  <span class="alarm-unit">minutes before</span>
+                </div>
+                <div class="alarm-option">
+                  <span class="alarm-label">Repeat every</span>
+                  <InputNumber v-model="item.RecurDays" :min="0" :showButtons="false" class="alarm-input" />
+                  <span class="alarm-unit">days</span>
+                </div>
+              </div>
+              <div class="panel-actions">
+                <Button label="Set Alarm" size="small" @click="saveTime(item)" />
+                <Button label="Clear" severity="secondary" size="small" @click="clearTime(item)" />
+              </div>
+            </div>
+          </div>
+          <div class="clear-completed-wrapper">
+            <Button label="Clear Completed" severity="danger" size="small" @click="clearCompleted()" />
+          </div>
+        </div>
+
+        <!-- Shared Users -->
+        <div v-if="activelist && activelist.Share && activelist.Share.length > 0" class="shared-users">
+          <Button :label="activelist.Account.User" icon="pi pi-user" size="small" severity="secondary" />
+          <Button v-for="user in activelist.Share" :key="user.ID" :label="user.User" icon="pi pi-users" size="small" severity="success" @click="confirmRemoveShare(user)" />
+        </div>
+
+        <!-- Remove Share Dialog -->
+        <Dialog v-model:visible="showRemoveShareList" header="Remove Share?" modal>
+          <p>This will remove the user from shared list, are you really sure?</p>
+          <template #footer>
+            <Button label="Cancel" severity="secondary" @click="showRemoveShareList = false" />
+            <Button label="Remove" severity="danger" @click="removeUserShare()" />
+          </template>
+        </Dialog>
+      </div>
+    </div>
+  </div>
 </template>
 
-
 <script>
-import { SlickList, SlickItem } from 'vue-slicksort';
-import { Slide } from 'vue-burger-menu'
-import $ from 'jquery';
+import draggable from 'vuedraggable'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 
-//import axios from 'axios';
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Textarea from 'primevue/textarea'
+import Dialog from 'primevue/dialog'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Drawer from 'primevue/drawer'
+
+const timeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+
 export default {
-    name: 'app',
-    data: () => {
-        return {
-            account: "",
-            tokens: [],
-            accounts: [],
-            nolists: false,
-            createNewAcc: false,
-            email: "",
-            createadm: false,
-            username: "",
-            password: "",
-            password2: "",
-            removeUser: "",
-            shareWithUser: "",
-            showRemoveShareList: false,
-            showShareList: false,
-            showDeleteList: false,
-            newListActive: false,
-            newListValue: null,
-            loggedIn: false,
-            lastUpdate: '',
-            timer: '',
-            newListName: "",
-            listActive: false,
-            activelist: "",
-            itemSize: 40,
-            result: "",
-            errorText: "",
-            info: "",
-            entry: '',
-            entryAlarm: false,
-            entryEdit: false,
-            lists: [],
-            todoList: [],
-            completedToDoList: [],
-            isSorting: false,
-            showCompletedList: false,
-            showingNote: false,
-            showingAlarm: false
-        }
-    },
-    components: {
-        SlickItem,
-        SlickList,
-        Slide
-    },
-    created: function() {
-        // Check if already logged in, not that safe, but...
-        var that = this;
-        if (localStorage.token != "" && localStorage.token != undefined) {
-            this.loggedIn = true;
-            this.account = JSON.parse(localStorage.getItem('account'));
-            this.selectList(JSON.parse(localStorage.getItem('activelist')));
-
-            if(this.account.Admin == true) {
-                this.fetchAdminItems();
-            } else {
-                this.fetchLists()
-                setInterval(function() {
-                    if(that.loggedIn) {
-                        that.periodcalUpdate();
-                    }
-                }, 5000);
-
-                setInterval(function() {
-                    if(that.loggedIn) {
-                        that.saveActiveNotes();
-                    }
-                }, 5000);
-            }
-        } else {
-            // Check if admin has been created.
-            $.ajax({
-                   type: "GET",
-                   url: "/hasadm",
-                   success: function(data) {
-                       if(data == false) {
-                           that.createadm = true;
-                       }else {
-                           that.createadm = false;
-                       }
-                   },
-                   error: that.handleError
-            });
-        }
-    },
-    methods: {
-        // Remove a token for a user, admin operation
-        revokeToken(id) {
-            var that = this;
-            $.ajax({
-                   type: "PUT",
-                   url: "/api/removetoken/"+id,
-                   beforeSend: that.setHeader,
-                   success: function() {
-                       that.fetchAdminItems();
-                   },
-                   error: that.handleError
-            });
-        },
-        // Validate a signed up user, admin operation
-        validateAccount(id) {
-            var that = this;
-            $.ajax({
-                   type: "PUT",
-                   url: "/api/validate/"+id,
-                   beforeSend: that.setHeader,
-                   success: function() {
-                       that.fetchAdminItems();
-                   },
-                   error: that.handleError
-            });
-        },
-        // Remove account, admin operation
-        removeAccount(id) {
-            var that = this;
-            $.ajax({
-                   type: "PUT",
-                   url: "/api/removeaccount/"+id,
-                   beforeSend: that.setHeader,
-                   success: function() {
-                       that.fetchAdminItems();
-                   },
-                   error: that.handleError
-            });
-        },
-        // Get all accounts and tokens, admin operation
-        fetchAdminItems() {
-            var that = this;
-            this.tokens = [];
-            this.accounts = [];
-            $.ajax({
-                   type: "GET",
-                   url: "/api/allaccounts",
-                   beforeSend: that.setHeader,
-                   success: function(data) {
-                       that.accounts = data;
-                       $('#app').css("max-width", "100%");
-                       $('#app').css("width", "100%");
-                   },
-                   error: that.handleError
-            });
-
-            $.ajax({
-                   type: "GET",
-                   url: "/api/alltokens",
-                   beforeSend: that.setHeader,
-                   success: function(data) {
-                       that.tokens = data;
-                   },
-                   error: that.handleError
-            });
-
-        },
-        // Signup for a new account
-        signup() {
-            if(this.email != "" && this.password2 != "" && this.password != "" && this.username != "" && (this.password == this.password2)) {
-                var data = {};
-                data["user"] = this.username;
-                data["pass"] = this.password;
-                data["adm"] = this.createadm;
-                data["email"] = this.email;
-                var that = this;
-                this.email = "";
-                this.password = "";
-                this.password2 = "";
-                this.createadm = false;
-
-                $('#signupdiv').html("<img style='padding-left: 50%;' src='loader.gif'/>");
-                $.ajax({
-                       type: "POST",
-                       url: "/signup",
-                       data: JSON.stringify(data),
-                       success: function() {
-                           window.location.reload();
-                       },
-                       error: that.handleError
-                });
-            }
-        },
-        // Set the current list as favorite
-        setFavorite() {
-            this.activelist.Favorite = !this.activelist.Favorite;
-            var fav = {}
-            fav["list"] = this.activelist.ID;
-            fav["favorite"] = this.activelist.Favorite;
-
-            if (this.activelist.Favorite) {
-                this.account.Favorite = this.activelist.ID;
-            } else {
-                this.account.Favorite = 0;
-            }
-
-            localStorage.setItem('account', JSON.stringify(this.account));
-
-            var that = this;
-            $.ajax({
-                   type: "POST",
-                   url: "/api/favorite",
-                   data: JSON.stringify(fav),
-                   beforeSend: that.setHeader,
-                   success: function() {
-                       that.fetchLists()
-                   },
-                   error: that.handleError
-            });
-        },
-        // Remove a user from a shared list
-        removeUserShare() {
-            if(this.removeUser == "") {
-                return;
-            }
-            var user = this.removeUser;
-            this.removeUser = "";
-
-            var that = this;
-            var share = {};
-            share["user"] = user.User;
-            share["list"] = this.activelist.ID;
-
-            $.ajax({
-                   type: "POST",
-                   url: "/api/removesharelist",
-                   data: JSON.stringify(share),
-                   beforeSend: that.setHeader,
-                   success: function() {
-                       that.fetchLists()
-                       let index = that.activelist.Share.findIndex(element => element.ID === user.ID);
-                       that.activelist.Share.splice(index, 1);
-                   },
-                   error: that.handleError
-            });
-        },
-        // Add a user to share a list with
-        shareList() {
-            var that = this;
-            var share = {};
-            var user = this.shareWithUser;
-            share["user"] = user;
-            share["list"] = this.activelist.ID;
-
-            $.ajax({
-                   type: "POST",
-                   url: "/api/sharelist",
-                   data: JSON.stringify(share),
-                   beforeSend: that.setHeader,
-                   success: function(userData) {
-                       that.fetchLists()
-                       if (that.activelist.Share == null) {
-                           that.activelist.Share = [];
-                       }
-                       if (userData != "") {
-                           that.activelist.Share.push(userData);
-                       }
-                       that.shareWithUser = "";
-                   },
-                   error: that.handleError
-            });
-        },
-        // Clear completed items for list 
-        clearCompleted() {
-            var that = this;
-            $.ajax({
-                   type: "POST",
-                   url: "/api/deletecompleted",
-                   data: JSON.stringify(this.activelist),
-                   beforeSend: that.setHeader,
-                   success: function() {
-                       that.selectList(that.activelist);
-                       that.showCompletedList = false;
-                   },
-                   error: that.handleError
-            });
-        },
-        // Delete the current list
-        deleteList() {
-            var that = this;
-            if(this.account.Favorite == this.activelist.ID) {
-                this.account.Favorite = 0;
-            }
-            $.ajax({
-                   type: "POST",
-                   url: "/api/deletelist",
-                   data: JSON.stringify(this.activelist),
-                   beforeSend: that.setHeader,
-                   success: function() {
-                       that.todoList = [];
-                       that.completedToDoList = [];
-                       that.activelist = "";
-                       that.fetchLists();
-
-                   },
-                   error: that.handleError
-            });
-        },
-        // Log out the user
-        logout() {
-            var that = this;
-            $.ajax({
-                   type: "POST",
-                   url: "/api/logout",
-                   beforeSend: that.setHeader,
-            });
-            that.loggedIn = false;
-            that.account = "";
-            localStorage.clear();
-            $('#app').css("max-width", "768px");
-            $('#app').css("width", "100%");
-        },
-        // Handle any error from backend
-        handleError(err) {
-            console.log(err);
-            //this.errorText = err;
-            if(err.status == 401) {
-                this.loggedIn = false;
-                localStorage.clear();
-                window.location.reload();
-            }
-            window.location.reload();
-        },
-        // Set the token in the header for a request
-        setHeader(request) {
-            request.setRequestHeader("token", localStorage.token);
-        },
-        // Log in the user
-        login() {
-            if(this.password != "" && this.username != "") {
-                var data = {};
-                data["user"] = this.username;
-                data["pass"] = this.password;
-                var that = this;
-                this.password = "";
-
-                $('#logindiv').html("<img style='padding-left: 50%;' src='loader.gif'/>");
-                $.ajax({
-                       type: "POST",
-                       url: "/login",
-                       data: JSON.stringify(data),
-                       success: function(data) {
-                           that.loggedIn = true;
-                           localStorage.token = data.Token;
-                           localStorage.setItem('account', JSON.stringify(data.Account));
-                           that.account = data.Account;
-                           if (that.account.Admin == true) {
-                               that.fetchAdminItems();
-                           } else {
-                               that.fetchLists();
-                           }
-                       },
-                       error: that.handleError
-                });
-            }
-        },
-        // Create a new list
-        newList() {
-            var newEntry = {
-                Name: this.newListValue
-            };
-            this.newListValue = "";
-
-            var that = this;
-            if(newEntry.Name != "" && newEntry.Name != null) {
-                $.ajax({
-                       type: "POST",
-                       beforeSend: that.setHeader,
-                       url: "/api/list",
-                       data: newEntry,
-                       success: function(data) {
-                           that.activelist = data;
-                           that.fetchLists();
-                       },
-                       error: that.handleError
-                });
-            }
-        },
-        // Save active notes periodically
-        saveActiveNotes() {
-            for(var i = 0; i < this.todoList.length; i++) {
-                if(this.todoList[i].showNote) {
-                    if (this.todoList[i].changed) {
-                        this.showingNote = true;
-                        this.saveItem(this.todoList[i], false);
-                        $("#autosave"+this.todoList[i].ID).show();
-                        $("#autosave"+this.todoList[i].ID).fadeOut(2000);
-                    }
-                }
-            }
-        },
-        // Check if there have been any updates to current list
-        periodcalUpdate() {
-            if(this.activelist == undefined
-               || this.activelist == ""
-               || this.isSorting 
-               || this.showingNote 
-               || this.showingAlarm ) {
-                return;
-            }
-            var that = this;
-            $.ajax({
-                   type: "GET",
-                   beforeSend: that.setHeader,
-                   url: "/api/refresh/"+that.activelist.ID+"/"+that.lastUpdate,
-                   success: function(data) {
-                       if(that.activelist == undefined
-                          || that.activelist == ""
-                          || that.isSorting 
-                          || that.showingNote 
-                          || that.showingAlarm ) {
-                           return;
-                       }
-                       if (data == "update") {
-                           that.selectList(that.activelist);
-                       }
-                   },
-                   error: that.handleError
-            });
-        },
-        // Copy is used to copy clicked items title
-        copy(item) {
-            var temp = $("<input>");
-            $("body").append(temp);
-            temp.val(item.Title);
-            temp.select();
-            document.execCommand("copy");
-            temp.remove();
-        },
-        // Change name of the current list
-        changeListName() {
-            var list = {};
-            list.ID = this.activelist.ID;
-            if(this.newListName == "") {
-                return;
-            }
-            list.Name = this.newListName;
-            var that = this;
-            $.ajax({
-                   type: "PUT",
-                   beforeSend: that.setHeader,
-                   url: "/api/rename",
-                   data: JSON.stringify(list),
-                   success: function() {
-                       that.activelist.Name = list.Name;
-                   },
-                   error: that.handleError
-            });
-            this.newListName = "";
-        },
-        // Dont allow dragging while having date selector up
-        cancelSort() {
-            if ($(".vdatetime-popup").length != 0) {
-                return true;
-            }
-            return false;
-        },
-        // Sorting event for moving an item in the list
-        sortStart() {
-            this.isSorting = true;
-            let newCanvas = document.querySelector('.drag-helper')
-            var text = newCanvas.innerText;
-            newCanvas.innerHTML = "<div style="+
-                "'font-size: 1.0rem;"+
-                "background: hsla(0,0%,100%,.5);"+
-                "border-radius: 5px;"+
-                "padding-top: 10px;"+
-                "padding-left: 40px;"+
-                "width: 100%;"+
-                "height: 40px;"+
-                "margin-bottom: 2px;"+
-                "overflow:hidden;'"+
-                ">"+text+"</div>";
-        },
-        // Sorting event end for moving an item in the list
-        sortEnd(a) {
-            this.isSorting = false;
-            var sortOrder = [];
-            for(var i = 0; i < a.length; i++) {
-                sortOrder.push({"id": a[i].ID, "order": i})
-            }
-            var that = this;
-            $.ajax({
-                   type: "POST",
-                   beforeSend: that.setHeader,
-                   url: "/api/sort",
-                   data: JSON.stringify(sortOrder),
-                   success: function() {
-                       that.selectList(that.activelist);
-                   },
-                   error: that.handleError
-            });
-        },
-        // Select a list and fetch its items
-        selectList(list) {
-            if(list == undefined || list == "") {
-                return;
-            }
-            this.activelist = list;
-            var that = this;
-            localStorage.setItem('activelist', JSON.stringify(list));
-
-            $.ajax({
-                   type: "GET",
-                   beforeSend: that.setHeader,
-                   url: "/api/items/"+list.ID,
-                   success: function(data) {
-                       if (that.activelist.ID == that.account.Favorite) {
-                           that.activelist.Favorite = true;
-                       }
-                       that.lastUpdate = Math.round(new Date().getTime()/1000);
-
-                       data.sort(function(a, b){
-                           return a.Order-b.Order;
-                       })
-
-                       that.todoList = [];
-                       that.completedToDoList = [];
-                       var completed = [];
-
-                       that.activelist.Items = [];
-                       for(var k in data) {
-                           var v = data[k];
-                           v.showNote = false;
-                           v.showTime = false;
-                           v.show = true;
-                           v.changed = false;
-
-                           if(!v.Complete) {
-                               that.todoList.push(v);
-                           } else {
-                               completed.push(v); 
-                           }
-                           that.activelist.Items.push(v);
-                       }
-                       // Sort completed.
-                       completed.sort(function(a,b){
-                           return b.Completed - a.Completed;
-                       });
-                       that.completedToDoList = completed;
-                   },
-                   error: that.handleError
-            });
-        },
-        // Change the title of an item
-        changeTitle(item) {
-            var that = this;
-            $('#'+item.ID).html("<input id='inp_"+item.ID+"' style='font-size: 1.2rem; background: none; width: 100%; height: 50px; color: #000; box-shadow: none; border: none;' value='"+item.Title+"'></input>");
-            $('#inp_'+item.ID).keyup(function(e){
-                // Cancel
-                if (e.keyCode == 27) {
-                    $('#'+item.ID).text(item.Title);
-                }
-                // Save
-                if(e.keyCode == 13) {
-                    item.Title = $('#inp_'+item.ID).val();
-                    $('#'+item.ID).text(item.Title);
-                    that.saveItem(item, false);
-                }
-            });
-        },
-        // Fetch all lists
-        fetchLists() {
-            var that = this;
-            $.ajax({
-                   type: "GET",
-                   beforeSend: that.setHeader,
-                   url: "/api/lists",
-                   success: function(data) {
-                       that.updateLists(data);
-                   },
-                   error: that.handleError
-            });
-        },
-        // Update list data
-        updateLists(data) {
-            this.lists = data;
-            this.nolists = false;
-            if (this.lists.length == 0) {
-                this.nolists = true;
-            }
-
-            if (this.lists.length > 0 && (this.activelist == undefined || this.activelist == "")) {
-                // Find favorite
-                if (this.account.Favorite != 0) {
-                    for(var i = 0; i < this.lists.length; i++) {
-                        if (this.lists[i].ID == this.account.Favorite) {
-                            this.lists[i].Favorite = true;
-                            this.selectList(this.lists[i]);
-                            return;
-                        }
-                    }
-                    this.selectList(this.lists[0]);
-                } else {
-                    this.selectList(this.lists[0]);
-                }
-            } else {
-                this.selectList(this.activelist);
-            }
-        },
-        // Add a new entry
-        addItem() {
-            if(this.entry !== '') {
-                let newEntry = {
-                    Note: "",
-                    Time: "",
-                    ListId: "",
-                    Title: this.entry,
-                    Completed: 0,
-                    Complete: false,
-                    showNote: false,
-                    showTime: false,
-                    show: true,
-                }
-
-                newEntry.ListId = this.activelist.ID;
-                var that = this;
-                $.ajax({
-                       type: "POST",
-                       beforeSend: that.setHeader,
-                       url: "/api/item",
-                       data: newEntry,
-                       success: function(dbItem) {
-                           dbItem.showNote = false;
-                           dbItem.showTime = false;
-                           dbItem.show = true;
-                           that.todoList.splice(0, 0, dbItem);
-                           that.sortEnd(that.todoList);
-                       },
-                       error: that.handleError
-                });
-            }
-
-            this.entry = '';
-        },
-        // Show the note for an item
-        showNote(item) {
-            this.showingNote = !this.showingNote;
-            item.showNote = !item.showNote;
-            item.alarm = false;
-            item.showTime = false;
-            if (item.showNote) {
-                item.itemSize = 400;
-            } else {
-                item.itemSize = 40;
-            }
-        },
-        noteInput(item) {
-            item.changed = true;
-        },
-        // Save an item with any changes made
-        saveItem(item, reload) {
-            item.changed = false;
-            var that = this;
-            $.ajax({
-                   type: "PUT",
-                   beforeSend: that.setHeader,
-                   url: "/api/item",
-                   data: item,
-                   success: function() {
-                       if (reload) {
-                           that.selectList(that.activelist);
-                       }
-                   },
-                   error: that.handleError
-            });
-        },
-        // Save a note for an item
-        saveNote(item) {
-            this.saveItem(item, false);
-            this.showNote(item);
-        },
-        // Save a alarm for an item
-        saveTime(item) {
-            this.saveItem(item, false);
-            this.showTime(item);
-        },
-        // Clear the alarm for an item
-        clearTime(item) {
-            item.Time = "";
-            this.saveItem(item,false);
-            this.showTime(item);
-        },
-        // Show the alarm settings
-        showTime(item) {
-            this.showingAlarm = !this.showingAlarm;
-            item.showTime = !item.showTime;
-            item.showNote = false;
-            if (item.showTime) {
-                item.itemSize = 200;
-            } else {
-                item.itemSize = 40;
-            }
-        },
-        // Mark an items as complete
-        completeItem(item) {
-            item.Complete = !item.Complete;
-            item.show = false;
-            this.saveItem(item, true);
-        },
-        // Mark an item as not complete
-        uncompleteItem(item) {
-            item.Complete = !item.Complete;
-            item.show = false;
-            this.saveItem(item, true);
-        } 
+  name: 'ToDoList',
+  components: {
+    draggable,
+    VueDatePicker,
+    Button,
+    InputText,
+    InputNumber,
+    Textarea,
+    Dialog,
+    DataTable,
+    Column,
+    Drawer
+  },
+  data() {
+    return {
+      account: {},
+      tokens: [],
+      accounts: [],
+      nolists: false,
+      createNewAcc: false,
+      email: '',
+      createadm: false,
+      username: '',
+      password: '',
+      password2: '',
+      removeUser: null,
+      shareWithUser: '',
+      showRemoveShareList: false,
+      showShareList: false,
+      showDeleteList: false,
+      newListDialogVisible: false,
+      newListValue: '',
+      loggedIn: false,
+      lastUpdate: 0,
+      newListName: '',
+      renameListDialogVisible: false,
+      activelist: null,
+      itemSize: 40,
+      errorText: '',
+      entry: '',
+      lists: [],
+      todoList: [],
+      completedToDoList: [],
+      showCompletedList: false,
+      sidebarVisible: false
     }
-}
+  },
+  created() {
+    if (localStorage.token) {
+      this.loggedIn = true
+      this.account = JSON.parse(localStorage.getItem('account') || '{}')
+      this.selectList(JSON.parse(localStorage.getItem('activelist') || 'null'))
 
+      if (this.account.Admin) {
+        this.fetchAdminItems()
+      } else {
+        this.fetchLists()
+        setInterval(() => {
+          if (this.loggedIn) this.periodicalUpdate()
+        }, 5000)
+        setInterval(() => {
+          if (this.loggedIn) this.saveActiveNotes()
+        }, 5000)
+      }
+    } else {
+      this.checkAdmin()
+    }
+  },
+  methods: {
+    async apiRequest(method, url, data = null) {
+      const options = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'token': localStorage.token || ''
+        }
+      }
+      if (data) {
+        options.body = JSON.stringify(data)
+      }
+      const response = await fetch(url, options)
+      if (response.status === 401) {
+        this.loggedIn = false
+        localStorage.clear()
+        window.location.reload()
+        throw new Error('Unauthorized')
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`)
+      }
+      const text = await response.text()
+      return text ? JSON.parse(text) : null
+    },
+
+    async checkAdmin() {
+      try {
+        const hasAdmin = await fetch('/hasadm').then(r => r.json())
+        this.createadm = !hasAdmin
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    async revokeToken(id) {
+      await this.apiRequest('PUT', `/api/removetoken/${id}`)
+      this.fetchAdminItems()
+    },
+
+    async validateAccount(id) {
+      await this.apiRequest('PUT', `/api/validate/${id}`)
+      this.fetchAdminItems()
+    },
+
+    async removeAccount(id) {
+      await this.apiRequest('PUT', `/api/removeaccount/${id}`)
+      this.fetchAdminItems()
+    },
+
+    async fetchAdminItems() {
+      try {
+        this.accounts = await this.apiRequest('GET', '/api/allaccounts')
+        this.tokens = await this.apiRequest('GET', '/api/alltokens')
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    async signup() {
+      if (!this.email || !this.password || !this.password2 || !this.username || this.password !== this.password2) {
+        return
+      }
+      try {
+        await fetch('/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user: this.username,
+            pass: this.password,
+            email: this.email,
+            adm: this.createadm
+          })
+        })
+        window.location.reload()
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    async setFavorite() {
+      this.activelist.Favorite = !this.activelist.Favorite
+      this.account.Favorite = this.activelist.Favorite ? this.activelist.ID : 0
+      localStorage.setItem('account', JSON.stringify(this.account))
+
+      await this.apiRequest('POST', '/api/favorite', {
+        list: this.activelist.ID,
+        favorite: this.activelist.Favorite
+      })
+      this.fetchLists()
+    },
+
+    confirmRemoveShare(user) {
+      this.removeUser = user
+      this.showRemoveShareList = true
+    },
+
+    async removeUserShare() {
+      if (!this.removeUser) return
+      await this.apiRequest('POST', '/api/removesharelist', {
+        user: this.removeUser.User,
+        list: this.activelist.ID
+      })
+      const index = this.activelist.Share.findIndex(u => u.ID === this.removeUser.ID)
+      if (index > -1) this.activelist.Share.splice(index, 1)
+      this.removeUser = null
+      this.showRemoveShareList = false
+      this.fetchLists()
+    },
+
+    async shareList() {
+      const result = await this.apiRequest('POST', '/api/sharelist', {
+        user: this.shareWithUser,
+        list: this.activelist.ID
+      })
+      if (result) {
+        if (!this.activelist.Share) this.activelist.Share = []
+        this.activelist.Share.push(result)
+      }
+      this.shareWithUser = ''
+      this.showShareList = false
+      this.fetchLists()
+    },
+
+    async clearCompleted() {
+      await this.apiRequest('POST', '/api/deletecompleted', this.activelist)
+      this.selectList(this.activelist)
+      this.showCompletedList = false
+    },
+
+    async deleteList() {
+      if (this.account.Favorite === this.activelist.ID) {
+        this.account.Favorite = 0
+      }
+      await this.apiRequest('POST', '/api/deletelist', this.activelist)
+      this.todoList = []
+      this.completedToDoList = []
+      this.activelist = null
+      this.showDeleteList = false
+      this.fetchLists()
+    },
+
+    logout() {
+      this.apiRequest('POST', '/api/logout').catch(() => {})
+      this.loggedIn = false
+      this.account = {}
+      localStorage.clear()
+    },
+
+    async login() {
+      if (!this.password || !this.username) return
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: this.username, pass: this.password })
+        })
+        if (!response.ok) {
+          this.password = ''
+          return
+        }
+        const data = await response.json()
+        this.loggedIn = true
+        localStorage.token = data.Token
+        localStorage.setItem('account', JSON.stringify(data.Account))
+        this.account = data.Account
+        this.password = ''
+        if (this.account.Admin) {
+          this.fetchAdminItems()
+        } else {
+          this.fetchLists()
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    async newList() {
+      if (!this.newListValue) return
+      const result = await this.apiRequest('POST', '/api/list', { Name: this.newListValue })
+      this.activelist = result
+      this.newListValue = ''
+      this.newListDialogVisible = false
+      this.fetchLists()
+    },
+
+    saveActiveNotes() {
+      for (const item of this.todoList) {
+        if (item.showNote && item.changed) {
+          this.saveItem(item, false)
+          item.autosaved = true
+          setTimeout(() => { item.autosaved = false }, 2000)
+        }
+      }
+    },
+
+    async periodicalUpdate() {
+      if (!this.activelist) return
+      try {
+        const result = await this.apiRequest('GET', `/api/refresh/${this.activelist.ID}/${this.lastUpdate}`)
+        if (result === 'update') {
+          this.selectList(this.activelist)
+        }
+      } catch (err) {
+        // Ignore refresh errors
+      }
+    },
+
+    copyItem(item) {
+      navigator.clipboard.writeText(item.Title)
+    },
+
+    async changeListName() {
+      if (!this.newListName) return
+      await this.apiRequest('PUT', '/api/rename', { ID: this.activelist.ID, Name: this.newListName })
+      this.activelist.Name = this.newListName
+      this.newListName = ''
+      this.renameListDialogVisible = false
+    },
+
+    async onSortEnd() {
+      // vuedraggable already updated the array via v-model
+      // Just save the new order to backend
+      const sortOrder = this.todoList.map((item, index) => ({ id: item.ID, order: index }))
+      await this.apiRequest('POST', '/api/sort', sortOrder)
+    },
+
+    async selectList(list) {
+      if (!list) return
+      this.activelist = list
+      localStorage.setItem('activelist', JSON.stringify(list))
+
+      try {
+        const data = await this.apiRequest('GET', `/api/items/${list.ID}`)
+        if (this.activelist.ID === this.account.Favorite) {
+          this.activelist.Favorite = true
+        }
+        this.lastUpdate = Math.round(Date.now() / 1000)
+
+        data.sort((a, b) => a.Order - b.Order)
+
+        this.todoList = []
+        this.completedToDoList = []
+        const completed = []
+
+        for (const item of data) {
+          item.showNote = false
+          item.showTime = false
+          item.changed = false
+          item.editing = false
+          item.autosaved = false
+          item.itemSize = 40
+          item.dateTime = item.Time ? new Date(item.Time) : null
+          item.RecurDays = item.RecurDays || 0
+          item.PreAlarmMinutes = item.PreAlarmMinutes || 0
+
+          if (!item.Complete) {
+            this.todoList.push(item)
+          } else {
+            completed.push(item)
+          }
+        }
+
+        completed.sort((a, b) => b.Completed - a.Completed)
+        this.completedToDoList = completed
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    changeTitle(item) {
+      item.editing = true
+      item.originalTitle = item.Title
+    },
+
+    saveTitle(item) {
+      item.editing = false
+      if (item.Title !== item.originalTitle) {
+        this.saveItem(item, false)
+      }
+    },
+
+    cancelEditTitle(item) {
+      item.Title = item.originalTitle
+      item.editing = false
+    },
+
+    async fetchLists() {
+      try {
+        const data = await this.apiRequest('GET', '/api/lists')
+        this.lists = data
+        this.nolists = this.lists.length === 0
+
+        if (this.lists.length > 0 && !this.activelist) {
+          if (this.account.Favorite) {
+            const favList = this.lists.find(l => l.ID === this.account.Favorite)
+            if (favList) {
+              favList.Favorite = true
+              this.selectList(favList)
+              return
+            }
+          }
+          this.selectList(this.lists[0])
+        } else if (this.activelist) {
+          this.selectList(this.activelist)
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    async addItem() {
+      if (!this.entry) return
+      const newEntry = {
+        Note: '',
+        Time: '',
+        ListId: this.activelist.ID,
+        Title: this.entry,
+        Completed: 0,
+        Complete: false,
+        RecurDays: 0,
+        PreAlarmMinutes: 0
+      }
+
+      try {
+        const dbItem = await this.apiRequest('POST', '/api/item', newEntry)
+        dbItem.showNote = false
+        dbItem.showTime = false
+        dbItem.changed = false
+        dbItem.editing = false
+        dbItem.autosaved = false
+        dbItem.itemSize = 40
+        dbItem.dateTime = null
+        dbItem.RecurDays = 0
+        dbItem.PreAlarmMinutes = 0
+        this.todoList.unshift(dbItem)
+        // Save order after adding new item at top
+        const sortOrder = this.todoList.map((item, index) => ({ id: item.ID, order: index }))
+        await this.apiRequest('POST', '/api/sort', sortOrder)
+      } catch (err) {
+        console.error(err)
+      }
+      this.entry = ''
+    },
+
+    showNote(item) {
+      item.showNote = !item.showNote
+      item.showTime = false
+      item.itemSize = item.showNote ? 250 : 40
+    },
+
+    async saveItem(item, reload) {
+      item.changed = false
+      if (item.dateTime) {
+        item.Time = item.dateTime.toISOString()
+      }
+      await this.apiRequest('PUT', '/api/item', item)
+      if (reload) {
+        this.selectList(this.activelist)
+      }
+    },
+
+    saveNote(item) {
+      this.saveItem(item, false)
+      this.showNote(item)
+    },
+
+    saveTime(item) {
+      this.saveItem(item, false)
+      this.showTime(item)
+    },
+
+    clearTime(item) {
+      item.Time = ''
+      item.dateTime = null
+      item.RecurDays = 0
+      item.PreAlarmMinutes = 0
+      this.saveItem(item, false)
+      this.showTime(item)
+    },
+
+    showTime(item) {
+      item.showTime = !item.showTime
+      item.showNote = false
+      item.itemSize = item.showTime ? 280 : 40
+    },
+
+    completeItem(item) {
+      item.Complete = true
+      this.saveItem(item, true)
+    },
+
+    uncompleteItem(item) {
+      item.Complete = false
+      this.saveItem(item, true)
+    }
+  }
+}
 </script>
 
 <style lang="scss" scoped>
 .container {
-    padding: 10px;
-    margin-left: 0px;
-    width: calc(100% - 1px);
-    min-height: calc(100% - 10px);
-
-    @mixin feature-icon-copy($color) {
-        grid-column-start: 4;
-        grid-column-end: 4;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: #719fbb;
-        font-size: 1.4rem;
-        margin: 0 0px;
-        opacity: 0.2;
-        cursor: pointer;
-    }
-
-    @mixin feature-icon($color) {
-        grid-column-start: 5;
-        grid-column-end: 5;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: $color;
-        font-size: 1.4rem;
-        margin: 0 0px;
-        cursor: pointer;
-    }
-
-    @mixin feature-icon-bell($color) {
-        grid-column-start: 6;
-        grid-column-end: 6;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: $color;
-        font-size: 1.4rem;
-        margin: 0 0px;
-        cursor: pointer;
-    }
-
-    .error {
-        color: #FFF;
-        font-size: 0.7rem;
-        background: #CC3333;
-        margin-top: -10px;
-        margin-bottom: -10px;
-    }
-
-    .add-item {
-        display: grid;
-        grid-template-columns: 70px auto;
-        grid-template-rows: 60px;
-        width: 100%;
-        height: 60px;
-        background: rgba($color: #000000, $alpha: .3);
-        border-radius: 0px 5px 5px 5px;
-        overflow: hidden;
-
-        .add-icon {
-            grid-column-start: 1;
-            grid-column-end: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            font-size: 2rem;
-            cursor: pointer;
-        }
-
-        input {
-            grid-column-start: 2;
-            grid-column-end: 2;
-            background: none;
-            border: none;
-            width: 100%;
-            height: 60px;
-            color: #fff;
-            font-size: 1.6rem;
-
-            &::placeholder {
-                color: #fff;
-            }
-
-            &:focus {
-                outline: none;
-            }
-        }
-
-    }
-
-    .drag{
-        font-size: 25px;
-        background: rgba($color: #fff, $alpha: .8);
-        border-radius: 5px;
-        color: #FF000;
-        display: grid;
-    }
-
-    .todo-list {
-        padding-top: 20px;
-
-        .item {
-            display: grid;
-            grid-template-columns: 40px auto 30px 30px 30px 30px;
-            grid-template-rows: 40px;
-            width: 100%;
-            height: 40px;
-            margin-bottom: 2px;
-            background: rgba($color: #fff, $alpha: .8);
-            border-radius: 5px;
-            overflow: hidden;
-            opacity: 0;
-            transition: all .2s linear;
-
-            .item-alarm {
-                grid-column-start: 1;
-                grid-column-end: 5;
-                width: 100%;
-                height: 98%;
-            }
-            .item-note {
-                grid-column-start: 1;
-                grid-column-end: 7;
-                width: 100%;
-                height: 78%;
-            }
-            .md-field {
-                height: 98%;
-            }
-            .md-field .md-textarea {
-                min-height: 98%;
-            }
-
-            .item-checkbox {
-                grid-column-start: 1;
-                grid-column-end: 1;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                font-size: 1.2rem;
-                color: #99C191;
-                cursor: pointer;
-            }
-
-            .item-title {
-                -webkit-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-                grid-column-start: 2;
-                grid-column-end: 2;
-                display: flex;
-                justify-content: flex-start;
-                align-items: center;
-                font-size: 1.0rem;
-                overflow: hidden;
-            }
-
-            .item-owner {
-                grid-column-start: 3;
-                grid-column-end: 3;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                color: #719fbb;
-                font-size: 0.8rem;
-                margin: 0 0px;
-            }
-
-            .feature-icon-copy {
-                @include feature-icon-copy(#333);
-            }
-            .feature-icon {
-                @include feature-icon(#333);
-            }
-            .feature-icon-bell {
-                @include feature-icon-bell(#333);
-            }
-        }
-
-        .show {
-            opacity: 1;
-        }
-    }
-
-    .complete-list {
-        .item {
-            position: relative;
-            background: rgba($color: #fff, $alpha: .4);
-
-            &::before {
-                content: '';
-                position: absolute;
-                top: 20px;
-                width: calc(100% - 120px);
-                margin: 0 40px;
-                border-bottom: 2px solid #555;
-            }
-        }
-    }
-
-    .show-completed {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding-top: 20px;
-
-        .button {
-            color: #fff;
-            padding: 10px;
-            font-size: 1.0rem;
-            text-transform: uppercase;
-            background: rgba($color: #000000, $alpha: .3);
-            border-radius: 5px;
-            overflow: hidden;
-            cursor: pointer;
-        }
-    }
-
-    .datetime  {
-        margin-left: 20px;
-        margin-top: 5px;
-        border-radius: 10px;
-    }
-    .red-bg {
-        color: #C23741 !important;
-    }
+  padding: 10px;
+  min-height: calc(100vh - 20px);
 }
 
-.time {
-    font-size: 0.7rem;
-    justify-content: right;
-    color: #333333;
+.error {
+  color: #fff;
+  background: #c33;
+  padding: 10px;
+  border-radius: 5px;
 }
 
-.list-name{
-    display: inline-flex;
-    justify-content: right;
+.admin-text {
+  color: #f55;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.auth-form {
+  max-width: 400px;
+  margin: 20px auto;
+
+  .form-field {
+    display: flex;
     align-items: center;
-    padding-top: 0px;
-    font-weight: bold;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    margin-bottom: 5px;
+    padding: 10px;
 
-    .button {
-        color: #fff;
-        padding: 5px;
-        font-size: 0.8rem;
-        background: rgba($color: #000000, $alpha: .3);
-        border-radius: 5px 5px 0px 0px;
-        overflow: hidden;
-        margin-top: 10px;
-        z-index: 0;
+    i {
+      color: #fff;
+      font-size: 1.5rem;
+      margin-right: 15px;
+      width: 30px;
+      text-align: center;
     }
-}
-.vdatetime-input { 
-    font-size: 1rem;
-    margin: 10px;
+
+    :deep(.p-inputtext) {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+  }
 }
 
-#addToHome{
-    height: 20px;
-    margin: 1px;
-    background: #13668f;
-    color: #FFF;
-    font-size: 10px;
-    text-transform: none;
-    display: none;
-    min-width: 20px;
-    width: 20px;
+.menu-btn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 100;
 }
-#changeListName {
+
+.sidebar-menu {
+  :deep(.p-drawer-content) {
+    background: linear-gradient(to bottom right, #21656d, #0d4826);
     color: #fff;
-    height: 20px;
-    margin: 1px;
-    font-size: 11px;
-    text-transform: none;
+  }
+
+  :deep(.p-drawer-header) {
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+  }
 }
 
+.list-menu-item {
+  padding: 10px;
+  cursor: pointer;
+  font-size: 1.2rem;
 
-.user-login {
-    display: grid;
-    grid-template-columns: 70px auto;
-    grid-template-rows: 60px;
-    width: 100%;
-    height: 60px;
-    background: rgba($color: #000000, $alpha: .3);
-    border-radius: 5px 5px 5px 5px;
-    overflow: hidden;
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
 
-    .pass-icon {
-        grid-column-start: 1;
-        grid-column-end: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: #fff;
-        font-size: 2rem;
-        cursor: pointer;
+  .fav-icon {
+    color: gold;
+    margin-left: 5px;
+  }
+}
+
+.sidebar-footer {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+
+  .logged-in-text {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
+}
+
+.list-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 5px 5px 0 0;
+  margin-bottom: 0;
+
+  .list-name {
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 2px 5px;
+
+    &:hover {
+      text-decoration: underline;
     }
-    .user-icon {
-        grid-column-start: 1;
-        grid-column-end: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: #fff;
-        font-size: 2rem;
-        cursor: pointer;
+  }
+
+  .action-btn {
+    color: #fff;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
 
-    input {
-        grid-column-start: 2;
-        grid-column-end: 2;
-        background: none;
-        border: none;
-        width: 100%;
-        height: 60px;
-        color: #fff;
-        font-size: 1.6rem;
-
-        &::placeholder {
-            color: #fff;
-        }
-
-        &:focus {
-            outline: none;
-        }
+    &.delete-btn:hover {
+      background: #a55;
     }
-}
-.login-btn {
-    width: 100%;
-    margin: 0px;
-    padding: 0px;
+
+    &.share-btn:hover {
+      background: #5a5;
+    }
+
+    &.fav-active {
+      color: gold;
+    }
+  }
 }
 
-#signup-btn {
-    width: 100px;
-    background: transparent !important;
-    color: #FFF;
-    padding: 0px;
-    margin-top: 20px;
-}
+.add-item {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0 5px 5px 5px;
+  overflow: hidden;
 
-#actions {
+  .add-icon {
+    display: flex;
     justify-content: center;
-}
+    align-items: center;
+    width: 60px;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
 
-.fav-btn-active {
-    background: #FFD700 !important;
-}
-#fav-btn {
+  .add-input {
+    flex: 1;
     background: transparent;
-    color: #FFFFFF;
-    height: 20px;
-    min-height: 20px;
-    width: 20px;
-    min-width: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
-}
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+    padding: 15px;
 
-#delete-btn {
-    background: #AA5555;
-    color: #FFFFFF;
-    height: 20px;
-    min-height: 20px;
-    width: 20px;
-    min-width: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
-}
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
 
-#share-btn {
-    background: #55AA55;
-    color: #FFFFFF;
-    height: 20px;
-    min-height: 20px;
-    width: 20px;
-    min-width: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
-    font-family: Arial,Helvetica,sans-serif;
-}
-
-#creator-btn {
-    font-family: Arial,Helvetica,sans-serif;
+  :deep(.p-inputtext) {
     background: transparent;
-    color: #000;
-    height: 20px;
-    min-height: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
 }
 
-#owner-btn {
-    font-family: Arial,Helvetica,sans-serif;
-    background: transparent;
-    color: #FFFFFF;
-    height: 20px;
-    min-height: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
+.todo-list {
+  margin-top: 10px;
+
+  .item {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 5px;
+    margin-bottom: 2px;
+    overflow: hidden;
+    transition: min-height 0.2s;
+
+    &.expanded {
+      overflow: visible;
+    }
+  }
+
+  .item-content {
+    display: grid;
+    grid-template-columns: 40px 1fr auto auto;
+    align-items: center;
+    min-height: 40px;
+    padding-right: 10px;
+  }
+
+  .item-checkbox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #99c191;
+    cursor: pointer;
+  }
+
+  .item-title {
+    font-size: 1rem;
+    padding: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .title-input {
+      width: 100%;
+      font-size: 1rem;
+    }
+  }
+
+  .item-owner {
+    font-size: 0.7rem;
+    color: #888;
+    margin-right: 10px;
+  }
+
+  .item-actions {
+    display: flex;
+    gap: 8px;
+
+    .action-icon {
+      cursor: pointer;
+      color: #666;
+      font-size: 1.1rem;
+
+      &:hover {
+        color: #333;
+      }
+
+      &.active {
+        color: #c23741;
+      }
+    }
+  }
+
+  .item-panel {
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid #ddd;
+  }
+
+  .panel-actions {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+  }
 }
 
-#adm-logout-btn {
-    background: #AA5555;
-    color: #FFFFFF;
-    height: 20px;
-    min-height: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
+.completed-list {
+  .item {
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0.7;
+
+    .item-title {
+      text-decoration: line-through;
+      color: #666;
+    }
+
+    .item-checkbox {
+      color: #7a7;
+    }
+  }
+
+  .item-panel {
+    opacity: 1;
+  }
 }
 
-#remove-btn {
-    background: #AA5555;
-    color: #FFFFFF;
-    height: 20px;
-    min-height: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
+.show-completed-wrapper {
+  margin-top: 15px;
+  text-align: center;
 }
 
-#validate-btn {
-    background: #55AA55;
-    color: #FFFFFF;
-    height: 20px;
-    min-height: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
+.show-completed-btn {
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  i {
+    margin-right: 6px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
 }
 
-#shared-btn {
-    background: #55AA55;
-    color: #FFFFFF;
-    height: 20px;
-    min-height: 20px;
-    margin: 1px;
-    font-size: 10px;
-    text-transform: none;
+.clear-completed-wrapper {
+  margin-top: 10px;
+  text-align: center;
 }
 
-#user {
-    border-radius: 5px 5px 0px 0px;
-}
-#pass {
-    border-radius: 0px;
+.drag-ghost {
+  opacity: 0.5;
+  background: rgba(255, 255, 255, 0.8) !important;
 }
 
-.fav-size {
-    color: #FFD700;
-    padding-left: 5px;
+.drag-active {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+  cursor: grabbing;
 }
 
-.adminText {
-    color: #FF5555;
-    text-decoration: bold;
+.alarm-options {
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.autosaved {
-    color: #333333;
-    text-decoration: bold;
-    margin-top: 2px;
-    font-size: 8px;
+.alarm-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .alarm-label {
+    color: #333;
+    font-size: 0.85rem;
+    min-width: 85px;
+    font-weight: 500;
+  }
+
+  .alarm-input {
+    width: 60px;
+
+    :deep(.p-inputnumber-input) {
+      width: 60px;
+      padding: 4px 8px;
+      text-align: center;
+    }
+  }
+
+  .alarm-unit {
+    color: #666;
+    font-size: 0.8rem;
+  }
 }
 
+.autosave-indicator {
+  color: #5a5;
+  font-size: 0.8rem;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.3s;
+
+  &.visible {
+    opacity: 1;
+  }
+}
+
+.shared-users {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.drag-helper {
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+}
+
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.mt-4 { margin-top: 1.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mr-1 { margin-right: 0.25rem; }
+.w-full { width: 100%; }
+.text-center { text-align: center; }
 </style>

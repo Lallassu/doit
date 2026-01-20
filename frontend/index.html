@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico">
+    <title>DoIt</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+    <script defer>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(reg) {})
+          .catch(function(err) {});
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        let deferredPrompt;
+        const addBtn = document.querySelector('.add-button');
+        if (addBtn) {
+          e.preventDefault();
+          deferredPrompt = e;
+          addBtn.style.display = 'block';
+
+          addBtn.addEventListener('click', () => {
+            addBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(() => {
+              deferredPrompt = null;
+            });
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

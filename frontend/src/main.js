@@ -1,16 +1,24 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
-Vue.config.productionTip = false
+import PrimeVue from 'primevue/config'
+import Aura from '@primeuix/themes/aura'
+import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
 
-import 'vue-material/dist/vue-material.min.css'
-import 'vue-material/dist/theme/default.css'
-import { Datetime } from 'vue-datetime'
-import 'vue-datetime/dist/vue-datetime.css'
-import VueMaterial from 'vue-material'
+import 'primeicons/primeicons.css'
 
-Vue.use(VueMaterial)
-Vue.component('datetime', Datetime)
+const app = createApp(App)
 
-new Vue({
-        render: h => h(App),
-}).$mount('#app')
+app.use(PrimeVue, {
+  theme: {
+    preset: Aura,
+    options: {
+      darkModeSelector: false
+    }
+  }
+})
+
+app.use(ToastService)
+app.use(ConfirmationService)
+
+app.mount('#app')

@@ -225,6 +225,7 @@ func (d *DB) SaveItem(l *Item, acc *Account) {
 	if d.HaveAccess(acc.ID, uint(l.ListId)) {
 		l.DeletedAt = nil
 		l.ReminderSent = false
+		l.PreAlarmSent = false
 		l.Account = *acc
 		d.db.Unscoped().Create(l)
 	}
@@ -255,9 +256,10 @@ func (d *DB) UpdateItem(l *Item, acc *Account) {
 		// Keep creator account, this is a workaround for now.
 		l.Account = item.Account
 
-		// Only set remindersent to false if time has changed.
+		// Reset reminder flags if time has changed.
 		if l.Time != item.Time {
 			l.ReminderSent = false
+			l.PreAlarmSent = false
 		}
 		if l.Complete {
 			l.Completed = int(time.Now().UTC().Unix())

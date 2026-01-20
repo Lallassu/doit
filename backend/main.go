@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -31,6 +33,8 @@ func main() {
 	tlsKey := flag.String("tlskey", "server.key", "TLS key")
 	emailHost := flag.String("mailhost", "localhost:25", "Host:port to SMTP server (empty = disable email notifications)")
 	emailFrom := flag.String("mailfrom", "doit@example.com", "From email for email reminders")
+	telegramToken := flag.String("telegram-token", "", "Telegram bot token (empty = disable)")
+	telegramChatID := flag.String("telegram-chat-id", "", "Telegram chat ID for notifications")
 
 	flag.Parse()
 
@@ -42,14 +46,15 @@ func main() {
 
 	// Send reminders for alarms.
 	go func() {
-		if *emailHost == "" {
+		// Skip if neither email nor Telegram is configured
+		if *emailHost == "" && *telegramToken == "" {
 			return
 		}
 		for {
 			lists := db.AllListsWithItems()
 			for _, l := range lists {
 				for _, item := range l.Items {
-					if item.Time == "" || item.ReminderSent || item.Complete {
+					if item.Time == "" || item.Complete {
 						continue
 					}
 
@@ -59,23 +64,57 @@ func main() {
 						continue
 					}
 
-					if time.Since(t).Seconds() >= 0 {
-						// Send email to owner and shares.
-						acc := db.GetAccount(item.AccountID)
-						emails := []string{acc.Email}
-						for _, e := range l.Share {
-							emails = append(emails, e.Email)
+					acc := db.GetAccount(item.AccountID)
+					emails := []string{acc.Email}
+					for _, e := range l.Share {
+						emails = append(emails, e.Email)
+					}
+
+					// Pre-alarm check
+					if item.PreAlarmMinutes > 0 && !item.PreAlarmSent {
+						preAlarmTime := t.Add(-time.Duration(item.PreAlarmMinutes) * time.Minute)
+						if time.Since(preAlarmTime).Seconds() >= 0 {
+							subject := fmt.Sprintf("[DoIt] Coming up in %d minutes: %s", item.PreAlarmMinutes, item.Title)
+							body := fmt.Sprintf("Reminder: '%s' is coming up in %d minutes", item.Title, item.PreAlarmMinutes)
+
+							if *emailHost != "" {
+								SendMail(*emailHost, *emailFrom, subject, body, emails)
+								fmt.Printf("Send pre-alarm email for '%s' to %v\n", item.Title, emails)
+							}
+							if *telegramToken != "" && *telegramChatID != "" {
+								SendTelegram(*telegramToken, *telegramChatID, body)
+								fmt.Printf("Send pre-alarm Telegram for '%s'\n", item.Title)
+							}
+
+							item.PreAlarmSent = true
+							db.UpdateItemSent(&item, acc)
+						}
+					}
+
+					// Main alarm check
+					if !item.ReminderSent && time.Since(t).Seconds() >= 0 {
+						subject := fmt.Sprintf("[DoIt] %s", item.Title)
+						body := fmt.Sprintf("This is a reminder for: %s", item.Title)
+
+						if *emailHost != "" {
+							SendMail(*emailHost, *emailFrom, subject, body, emails)
+							fmt.Printf("Send email alert for '%s' to %v\n", item.Title, emails)
+						}
+						if *telegramToken != "" && *telegramChatID != "" {
+							SendTelegram(*telegramToken, *telegramChatID, body)
+							fmt.Printf("Send Telegram alert for '%s'\n", item.Title)
 						}
 
-						SendMail(*emailHost,
-							*emailFrom,
-							fmt.Sprintf("[DoIt]%s", item.Title),
-							fmt.Sprintf("This is a reminder for: %s", item.Title),
-							emails,
-						)
-						fmt.Printf("Send email alert for '%s' to %v\n", item.Title, emails)
-
-						item.ReminderSent = true
+						// Handle recurring alarms
+						if item.RecurDays > 0 {
+							newTime := t.AddDate(0, 0, item.RecurDays)
+							item.Time = newTime.Format(timeFormat)
+							item.ReminderSent = false
+							item.PreAlarmSent = false
+							fmt.Printf("Rescheduled recurring alarm for '%s' to %s\n", item.Title, item.Time)
+						} else {
+							item.ReminderSent = true
+						}
 						db.UpdateItemSent(&item, acc)
 					}
 				}
@@ -466,4 +505,28 @@ func SendMail(addr, from, subject, body string, to []string) error {
 		return err
 	}
 	return c.Quit()
+}
+
+func SendTelegram(token, chatID, message string) error {
+	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", token)
+
+	payload := map[string]string{
+		"chat_id": chatID,
+		"text":    message,
+	}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("telegram API returned status %d", resp.StatusCode)
+	}
+	return nil
 }

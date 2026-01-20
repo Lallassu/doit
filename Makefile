@@ -3,9 +3,10 @@ dev: clean prepare
 	cd backend && go run . -tlscert server.crt -tlskey server.key -hostport 0.0.0.0:8443
 
 prepare:
-	cd frontend && yarn install && yarn run build
+	cd frontend && pnpm install && pnpm run build
 	mkdir -p doit
 	cp -r frontend/dist doit/dist
+	cp frontend/public/* doit/dist/
 
 dist: prepare
 	mkdir -p doit
@@ -17,4 +18,4 @@ dist: prepare
 clean:
 	rm -f doit.tar.gz
 	rm -rf doit
-	rm -rf backend/dist 
+	rm -rf backend/dist

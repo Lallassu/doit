@@ -1,6 +1,6 @@
 module backend
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/gin-contrib/static v0.0.0-20191128031702-f81c604d8ac2
@@ -26,7 +26,7 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
+	github.com/mattn/go-sqlite3 v1.14.33 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect

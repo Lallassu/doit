@@ -1,4 +1,4 @@
-FROM golang:alpine AS build
+FROM golang:1.25-alpine AS build
 WORKDIR /app
 COPY . /app
 RUN apk add --update-cache yarn make gcc libc-dev && \
