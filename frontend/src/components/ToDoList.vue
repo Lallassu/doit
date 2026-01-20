@@ -205,6 +205,10 @@
                       <InputNumber v-model="item.RecurDays" :min="0" :showButtons="false" class="alarm-input" />
                       <span class="alarm-unit">days</span>
                     </div>
+                    <div v-if="telegramChats.length > 0" class="alarm-option">
+                      <span class="alarm-label">Telegram</span>
+                      <Select v-model="item.TelegramChat" :options="telegramChats" placeholder="None" showClear class="telegram-select" />
+                    </div>
                   </div>
                   <div class="panel-actions">
                     <Button label="Set Alarm" size="small" @click="saveTime(item)" />
@@ -263,6 +267,10 @@
                   <InputNumber v-model="item.RecurDays" :min="0" :showButtons="false" class="alarm-input" />
                   <span class="alarm-unit">days</span>
                 </div>
+                <div v-if="telegramChats.length > 0" class="alarm-option">
+                  <span class="alarm-label">Telegram</span>
+                  <Select v-model="item.TelegramChat" :options="telegramChats" placeholder="None" showClear class="telegram-select" />
+                </div>
               </div>
               <div class="panel-actions">
                 <Button label="Set Alarm" size="small" @click="saveTime(item)" />
@@ -307,6 +315,7 @@ import Dialog from 'primevue/dialog'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Drawer from 'primevue/drawer'
+import Select from 'primevue/select'
 
 const timeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
 
@@ -322,7 +331,8 @@ export default {
     Dialog,
     DataTable,
     Column,
-    Drawer
+    Drawer,
+    Select
   },
   data() {
     return {
@@ -355,10 +365,12 @@ export default {
       todoList: [],
       completedToDoList: [],
       showCompletedList: false,
-      sidebarVisible: false
+      sidebarVisible: false,
+      telegramChats: []
     }
   },
   created() {
+    this.fetchTelegramChats()
     if (localStorage.token) {
       this.loggedIn = true
       this.account = JSON.parse(localStorage.getItem('account') || '{}')
@@ -411,6 +423,15 @@ export default {
         this.createadm = !hasAdmin
       } catch (err) {
         console.error(err)
+      }
+    },
+
+    async fetchTelegramChats() {
+      try {
+        const chats = await fetch('/telegram-chats').then(r => r.json())
+        this.telegramChats = chats || []
+      } catch (err) {
+        this.telegramChats = []
       }
     },
 
@@ -634,6 +655,7 @@ export default {
           item.dateTime = item.Time ? new Date(item.Time) : null
           item.RecurDays = item.RecurDays || 0
           item.PreAlarmMinutes = item.PreAlarmMinutes || 0
+          item.TelegramChat = item.TelegramChat || ''
 
           if (!item.Complete) {
             this.todoList.push(item)
@@ -700,7 +722,8 @@ export default {
         Completed: 0,
         Complete: false,
         RecurDays: 0,
-        PreAlarmMinutes: 0
+        PreAlarmMinutes: 0,
+        TelegramChat: ''
       }
 
       try {
@@ -714,6 +737,7 @@ export default {
         dbItem.dateTime = null
         dbItem.RecurDays = 0
         dbItem.PreAlarmMinutes = 0
+        dbItem.TelegramChat = ''
         this.todoList.unshift(dbItem)
         // Save order after adding new item at top
         const sortOrder = this.todoList.map((item, index) => ({ id: item.ID, order: index }))
@@ -756,6 +780,7 @@ export default {
       item.dateTime = null
       item.RecurDays = 0
       item.PreAlarmMinutes = 0
+      item.TelegramChat = ''
       this.saveItem(item, false)
       this.showTime(item)
     },
@@ -1145,6 +1170,15 @@ export default {
   .alarm-unit {
     color: #666;
     font-size: 0.8rem;
+  }
+
+  .telegram-select {
+    min-width: 120px;
+
+    :deep(.p-select-label) {
+      padding: 4px 8px;
+      font-size: 0.85rem;
+    }
   }
 }
 

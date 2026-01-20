@@ -41,9 +41,10 @@ type Item struct {
 	Completed       int
 	Time            string
 	ReminderSent    bool
-	RecurDays       int  // 0 = no recurrence, >0 = repeat every N days
-	PreAlarmMinutes int  // 0 = no pre-alarm, >0 = minutes before
-	PreAlarmSent    bool // track if pre-alarm was sent
-	AccountID       uint // could be a co-creator
+	RecurDays       int    // 0 = no recurrence, >0 = repeat every N days
+	PreAlarmMinutes int    // 0 = no pre-alarm, >0 = minutes before
+	PreAlarmSent    bool   // track if pre-alarm was sent
+	TelegramChat    string // name of Telegram chat to notify (empty = no Telegram)
+	AccountID       uint   // could be a co-creator
 	Account         Account
 }

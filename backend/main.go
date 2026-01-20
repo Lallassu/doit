@@ -23,6 +23,29 @@ type Header struct {
 
 var timeFormat = "2006-01-02T15:04:00.000Z"
 
+// Global map of Telegram chat name -> chat ID
+var telegramChats = make(map[string]string)
+
+// parseTelegramChats parses "name1=id1,name2=id2" format into a map
+func parseTelegramChats(input string) map[string]string {
+	result := make(map[string]string)
+	if input == "" {
+		return result
+	}
+	pairs := strings.Split(input, ",")
+	for _, pair := range pairs {
+		parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+		if len(parts) == 2 {
+			name := strings.TrimSpace(parts[0])
+			chatID := strings.TrimSpace(parts[1])
+			if name != "" && chatID != "" {
+				result[name] = chatID
+			}
+		}
+	}
+	return result
+}
+
 func main() {
 
 	hostPort := flag.String("hostport", "localhost:8443", "host:port to run webserver on.")
@@ -34,9 +57,12 @@ func main() {
 	emailHost := flag.String("mailhost", "localhost:25", "Host:port to SMTP server (empty = disable email notifications)")
 	emailFrom := flag.String("mailfrom", "doit@example.com", "From email for email reminders")
 	telegramToken := flag.String("telegram-token", "", "Telegram bot token (empty = disable)")
-	telegramChatID := flag.String("telegram-chat-id", "", "Telegram chat ID for notifications")
+	telegramChatIDs := flag.String("telegram-chat-ids", "", "Telegram chat IDs (format: name1=id1,name2=id2)")
 
 	flag.Parse()
+
+	// Parse Telegram chat IDs
+	telegramChats = parseTelegramChats(*telegramChatIDs)
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -70,6 +96,14 @@ func main() {
 						emails = append(emails, e.Email)
 					}
 
+					// Get Telegram chat ID for this item (if configured)
+					itemChatID := ""
+					if item.TelegramChat != "" {
+						if chatID, ok := telegramChats[item.TelegramChat]; ok {
+							itemChatID = chatID
+						}
+					}
+
 					// Pre-alarm check
 					if item.PreAlarmMinutes > 0 && !item.PreAlarmSent {
 						preAlarmTime := t.Add(-time.Duration(item.PreAlarmMinutes) * time.Minute)
@@ -81,9 +115,9 @@ func main() {
 								SendMail(*emailHost, *emailFrom, subject, body, emails)
 								fmt.Printf("Send pre-alarm email for '%s' to %v\n", item.Title, emails)
 							}
-							if *telegramToken != "" && *telegramChatID != "" {
-								SendTelegram(*telegramToken, *telegramChatID, body)
-								fmt.Printf("Send pre-alarm Telegram for '%s'\n", item.Title)
+							if *telegramToken != "" && itemChatID != "" {
+								SendTelegram(*telegramToken, itemChatID, body)
+								fmt.Printf("Send pre-alarm Telegram for '%s' to chat '%s'\n", item.Title, item.TelegramChat)
 							}
 
 							item.PreAlarmSent = true
@@ -100,9 +134,9 @@ func main() {
 							SendMail(*emailHost, *emailFrom, subject, body, emails)
 							fmt.Printf("Send email alert for '%s' to %v\n", item.Title, emails)
 						}
-						if *telegramToken != "" && *telegramChatID != "" {
-							SendTelegram(*telegramToken, *telegramChatID, body)
-							fmt.Printf("Send Telegram alert for '%s'\n", item.Title)
+						if *telegramToken != "" && itemChatID != "" {
+							SendTelegram(*telegramToken, itemChatID, body)
+							fmt.Printf("Send Telegram alert for '%s' to chat '%s'\n", item.Title, item.TelegramChat)
 						}
 
 						// Handle recurring alarms
@@ -176,6 +210,15 @@ func main() {
 				c.JSON(http.StatusUnauthorized, "")
 			}
 		}
+	})
+
+	// Return list of available Telegram chat names
+	router.GET("/telegram-chats", func(c *gin.Context) {
+		names := make([]string, 0, len(telegramChats))
+		for name := range telegramChats {
+			names = append(names, name)
+		}
+		c.JSON(http.StatusOK, names)
 	})
 
 	api := router.Group("/api", func(c *gin.Context) {
