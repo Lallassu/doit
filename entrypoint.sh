@@ -15,6 +15,6 @@ fi
 # needed as doit looks for ./dist
 cd /doit
 # Run
-./doit -hostport $DOIT_HOST:$DOIT_PORT -mailfrom $DOIT_MAILFROM -database $DOIT_DATABASE -tlscert $DOIT_TLSCERT -tlskey $DOIT_TLSKEY
+./doit -hostport $DOIT_HOST:$DOIT_PORT -mailfrom $DOIT_MAILFROM -database $DOIT_DATABASE -tlscert $DOIT_TLSCERT -tlskey $DOIT_TLSKEY -telegram-chat-ids $DOIT_TELEGRAM_IDS -telegram-token $DOIT_TELEGRAM_TOKEN
 
 
