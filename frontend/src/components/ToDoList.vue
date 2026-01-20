@@ -197,8 +197,9 @@
                   <div class="alarm-options">
                     <div class="alarm-option">
                       <span class="alarm-label">Notify me</span>
-                      <InputNumber v-model="item.PreAlarmMinutes" :min="0" :showButtons="false" class="alarm-input" />
-                      <span class="alarm-unit">minutes before</span>
+                      <InputNumber v-model="item.preAlarmValue" :min="0" :showButtons="false" class="alarm-input" @update:modelValue="updatePreAlarmMinutes(item)" />
+                      <Select v-model="item.preAlarmUnit" :options="preAlarmUnits" optionLabel="label" optionValue="value" class="unit-select" @change="updatePreAlarmMinutes(item)" />
+                      <span class="alarm-unit">before</span>
                     </div>
                     <div class="alarm-option">
                       <span class="alarm-label">Repeat every</span>
@@ -259,8 +260,9 @@
               <div class="alarm-options">
                 <div class="alarm-option">
                   <span class="alarm-label">Notify me</span>
-                  <InputNumber v-model="item.PreAlarmMinutes" :min="0" :showButtons="false" class="alarm-input" />
-                  <span class="alarm-unit">minutes before</span>
+                  <InputNumber v-model="item.preAlarmValue" :min="0" :showButtons="false" class="alarm-input" @update:modelValue="updatePreAlarmMinutes(item)" />
+                  <Select v-model="item.preAlarmUnit" :options="preAlarmUnits" optionLabel="label" optionValue="value" class="unit-select" @change="updatePreAlarmMinutes(item)" />
+                  <span class="alarm-unit">before</span>
                 </div>
                 <div class="alarm-option">
                   <span class="alarm-label">Repeat every</span>
@@ -366,7 +368,12 @@ export default {
       completedToDoList: [],
       showCompletedList: false,
       sidebarVisible: false,
-      telegramChats: []
+      telegramChats: [],
+      preAlarmUnits: [
+        { label: 'minutes', value: 'minutes' },
+        { label: 'hours', value: 'hours' },
+        { label: 'days', value: 'days' }
+      ]
     }
   },
   created() {
@@ -656,6 +663,7 @@ export default {
           item.RecurDays = item.RecurDays || 0
           item.PreAlarmMinutes = item.PreAlarmMinutes || 0
           item.TelegramChat = item.TelegramChat || ''
+          this.initPreAlarmDisplay(item)
 
           if (!item.Complete) {
             this.todoList.push(item)
@@ -737,6 +745,8 @@ export default {
         dbItem.dateTime = null
         dbItem.RecurDays = 0
         dbItem.PreAlarmMinutes = 0
+        dbItem.preAlarmValue = 0
+        dbItem.preAlarmUnit = 'minutes'
         dbItem.TelegramChat = ''
         this.todoList.unshift(dbItem)
         // Save order after adding new item at top
@@ -780,9 +790,40 @@ export default {
       item.dateTime = null
       item.RecurDays = 0
       item.PreAlarmMinutes = 0
+      item.preAlarmValue = 0
+      item.preAlarmUnit = 'minutes'
       item.TelegramChat = ''
       this.saveItem(item, false)
       this.showTime(item)
+    },
+
+    initPreAlarmDisplay(item) {
+      const minutes = item.PreAlarmMinutes || 0
+      if (minutes === 0) {
+        item.preAlarmValue = 0
+        item.preAlarmUnit = 'minutes'
+      } else if (minutes % 1440 === 0) {
+        item.preAlarmValue = minutes / 1440
+        item.preAlarmUnit = 'days'
+      } else if (minutes % 60 === 0) {
+        item.preAlarmValue = minutes / 60
+        item.preAlarmUnit = 'hours'
+      } else {
+        item.preAlarmValue = minutes
+        item.preAlarmUnit = 'minutes'
+      }
+    },
+
+    updatePreAlarmMinutes(item) {
+      const value = item.preAlarmValue || 0
+      const unit = item.preAlarmUnit || 'minutes'
+      if (unit === 'days') {
+        item.PreAlarmMinutes = value * 1440
+      } else if (unit === 'hours') {
+        item.PreAlarmMinutes = value * 60
+      } else {
+        item.PreAlarmMinutes = value
+      }
     },
 
     showTime(item) {
@@ -1174,6 +1215,15 @@ export default {
 
   .telegram-select {
     min-width: 120px;
+
+    :deep(.p-select-label) {
+      padding: 4px 8px;
+      font-size: 0.85rem;
+    }
+  }
+
+  .unit-select {
+    min-width: 90px;
 
     :deep(.p-select-label) {
       padding: 4px 8px;
