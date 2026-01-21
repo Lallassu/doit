@@ -1,7 +1,8 @@
 FROM golang:1.25-alpine AS build
 WORKDIR /app
 COPY . /app
-RUN apk add --update-cache yarn make gcc libc-dev && \
+ENV CI=true
+RUN apk add --update-cache pnpm make gcc libc-dev && \
     rm -rf /var/cache/apk/* && \
     make dist
 
