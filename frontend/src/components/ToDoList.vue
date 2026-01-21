@@ -158,6 +158,8 @@
             item-key="ID"
             @end="onSortEnd"
             :animation="200"
+            :delay="200"
+            :delayOnTouchOnly="true"
             ghost-class="drag-ghost"
             drag-class="drag-active"
           >
@@ -608,10 +610,110 @@ export default {
       try {
         const result = await this.apiRequest('GET', `/api/refresh/${this.activelist.ID}/${this.lastUpdate}`)
         if (result === 'update') {
-          this.selectList(this.activelist)
+          await this.mergeItems()
         }
       } catch (err) {
         // Ignore refresh errors
+      }
+    },
+
+    async mergeItems() {
+      if (!this.activelist) return
+      try {
+        const data = await this.apiRequest('GET', `/api/items/${this.activelist.ID}`)
+        this.lastUpdate = Math.round(Date.now() / 1000)
+
+        const serverItemIds = new Set(data.map(item => item.ID))
+
+        // Remove items that no longer exist on server
+        this.todoList = this.todoList.filter(item => serverItemIds.has(item.ID))
+        this.completedToDoList = this.completedToDoList.filter(item => serverItemIds.has(item.ID))
+
+        // Create maps for quick lookup of existing items
+        const existingItems = new Map()
+        for (const item of this.todoList) existingItems.set(item.ID, item)
+        for (const item of this.completedToDoList) existingItems.set(item.ID, item)
+
+        for (const serverItem of data) {
+          const existing = existingItems.get(serverItem.ID)
+
+          if (existing) {
+            // Update existing item but preserve UI state
+            const uiState = {
+              showNote: existing.showNote,
+              showTime: existing.showTime,
+              changed: existing.changed,
+              editing: existing.editing,
+              autosaved: existing.autosaved,
+              itemSize: existing.itemSize,
+              preAlarmValue: existing.preAlarmValue,
+              preAlarmUnit: existing.preAlarmUnit
+            }
+
+            // Check if item moved between lists (complete state changed)
+            const wasComplete = existing.Complete
+            const isNowComplete = serverItem.Complete
+
+            // Update data fields
+            Object.assign(existing, serverItem)
+            existing.dateTime = serverItem.Time ? new Date(serverItem.Time) : null
+            existing.RecurDays = serverItem.RecurDays || 0
+            existing.PreAlarmMinutes = serverItem.PreAlarmMinutes || 0
+            existing.TelegramChat = serverItem.TelegramChat || ''
+
+            // Restore UI state
+            Object.assign(existing, uiState)
+
+            // If not currently editing pre-alarm, update display from server value
+            if (!existing.showTime) {
+              this.initPreAlarmDisplay(existing)
+            }
+
+            // Handle list move if complete state changed
+            if (wasComplete !== isNowComplete) {
+              if (isNowComplete) {
+                // Move from todo to completed
+                const idx = this.todoList.findIndex(i => i.ID === existing.ID)
+                if (idx > -1) {
+                  this.todoList.splice(idx, 1)
+                  this.completedToDoList.unshift(existing)
+                }
+              } else {
+                // Move from completed to todo
+                const idx = this.completedToDoList.findIndex(i => i.ID === existing.ID)
+                if (idx > -1) {
+                  this.completedToDoList.splice(idx, 1)
+                  this.todoList.push(existing)
+                }
+              }
+            }
+          } else {
+            // New item from server - initialize and add
+            serverItem.showNote = false
+            serverItem.showTime = false
+            serverItem.changed = false
+            serverItem.editing = false
+            serverItem.autosaved = false
+            serverItem.itemSize = 40
+            serverItem.dateTime = serverItem.Time ? new Date(serverItem.Time) : null
+            serverItem.RecurDays = serverItem.RecurDays || 0
+            serverItem.PreAlarmMinutes = serverItem.PreAlarmMinutes || 0
+            serverItem.TelegramChat = serverItem.TelegramChat || ''
+            this.initPreAlarmDisplay(serverItem)
+
+            if (serverItem.Complete) {
+              this.completedToDoList.unshift(serverItem)
+            } else {
+              this.todoList.push(serverItem)
+            }
+          }
+        }
+
+        // Re-sort lists
+        this.todoList.sort((a, b) => a.Order - b.Order)
+        this.completedToDoList.sort((a, b) => b.Completed - a.Completed)
+      } catch (err) {
+        console.error('Merge items error:', err)
       }
     },
 
