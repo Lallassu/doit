@@ -10,7 +10,7 @@ prepare:
 
 dist: prepare
 	mkdir -p doit
-	cd backend && go build -o doit
+	cd backend && go mod tidy && go build -o doit
 	cp -r backend/doit doit/
 	tar cvfz doit.tar.gz doit
 	rm -rf doit
