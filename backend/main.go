@@ -464,6 +464,24 @@ func main() {
 		}
 	})
 
+	api.DELETE("/item/:id", func(c *gin.Context) {
+		if acc, ok := c.Get("account"); ok {
+			if id, err := strconv.Atoi(c.Param("id")); err == nil {
+				item := Item{}
+				item.ID = uint(id)
+				if db.DeleteItem(&item, acc.(*Account)) {
+					c.JSON(http.StatusOK, "")
+				} else {
+					c.JSON(http.StatusForbidden, "Item must be completed before deletion")
+				}
+			} else {
+				c.JSON(http.StatusBadRequest, "Invalid ID")
+			}
+		} else {
+			c.JSON(http.StatusUnauthorized, "")
+		}
+	})
+
 	api.POST("/item", func(c *gin.Context) {
 		if acc, ok := c.Get("account"); ok {
 			item := Item{}

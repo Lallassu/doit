@@ -350,6 +350,18 @@ func (d *DB) DeleteList(l *List, acc *Account) {
 	}
 }
 
+func (d *DB) DeleteItem(item *Item, acc *Account) bool {
+	dbItem := &Item{}
+	d.db.Preload("Account").First(&dbItem, item.ID)
+
+	// Only allow deletion if item is completed and owned by user
+	if dbItem.Account.ID == acc.ID && dbItem.Complete {
+		d.db.Unscoped().Delete(dbItem)
+		return true
+	}
+	return false
+}
+
 func (d *DB) AllListsWithItems() []List {
 	lists := []List{}
 

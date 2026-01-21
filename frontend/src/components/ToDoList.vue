@@ -246,6 +246,7 @@
                 <i class="fas fa-copy action-icon" @click="copyItem(item)"></i>
                 <i class="fas fa-pen action-icon" :class="{ active: item.Note.length > 0 }" @click="showNote(item)"></i>
                 <i class="fas fa-bell action-icon" :class="{ active: item.Time.length > 0 }" @click="showTime(item)"></i>
+                <i class="fas fa-times action-icon delete-icon" @click="deleteItem(item)"></i>
               </div>
             </div>
 
@@ -942,6 +943,18 @@ export default {
     uncompleteItem(item) {
       item.Complete = false
       this.saveItem(item, true)
+    },
+
+    async deleteItem(item) {
+      try {
+        await this.apiRequest('DELETE', `/api/item/${item.ID}`)
+        const idx = this.completedToDoList.findIndex(i => i.ID === item.ID)
+        if (idx > -1) {
+          this.completedToDoList.splice(idx, 1)
+        }
+      } catch (err) {
+        console.error('Failed to delete item:', err)
+      }
     }
   }
 }
@@ -1204,6 +1217,14 @@ export default {
 
       &.active {
         color: #c23741;
+      }
+
+      &.delete-icon {
+        color: #999;
+
+        &:hover {
+          color: #c33;
+        }
       }
     }
   }
