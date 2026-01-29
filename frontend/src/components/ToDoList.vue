@@ -162,6 +162,8 @@
             :delayOnTouchOnly="true"
             ghost-class="drag-ghost"
             drag-class="drag-active"
+            :filter="'.item-panel, .title-input'"
+            :preventOnFilter="false"
           >
             <template #item="{ element: item }">
               <div class="item" :class="{ expanded: item.showNote || item.showTime }" :style="{ minHeight: item.itemSize + 'px' }">
@@ -185,7 +187,7 @@
 
                 <!-- Note Panel -->
                 <div v-if="item.showNote" class="item-panel">
-                  <Textarea v-model="item.Note" rows="5" class="w-full" @input="item.changed = true" />
+                  <Textarea v-model="item.Note" rows="5" class="w-full" @input="onNoteInput(item)" />
                   <div class="panel-actions">
                     <Button label="Save" size="small" @click="saveNote(item)" />
                     <Button label="Cancel" severity="secondary" size="small" @click="showNote(item)" />
@@ -596,12 +598,21 @@ export default {
       this.fetchLists()
     },
 
+    onNoteInput(item) {
+      item.changed = true
+      item.lastNoteInput = Date.now()
+    },
+
     saveActiveNotes() {
+      const now = Date.now()
       for (const item of this.todoList) {
         if (item.showNote && item.changed) {
-          this.saveItem(item, false)
-          item.autosaved = true
-          setTimeout(() => { item.autosaved = false }, 2000)
+          // Only save if nothing has been typed for 2 seconds
+          if (!item.lastNoteInput || now - item.lastNoteInput >= 2000) {
+            this.saveItem(item, false)
+            item.autosaved = true
+            setTimeout(() => { item.autosaved = false }, 2000)
+          }
         }
       }
     },
@@ -648,8 +659,13 @@ export default {
               autosaved: existing.autosaved,
               itemSize: existing.itemSize,
               preAlarmValue: existing.preAlarmValue,
-              preAlarmUnit: existing.preAlarmUnit
+              preAlarmUnit: existing.preAlarmUnit,
+              lastNoteInput: existing.lastNoteInput
             }
+
+            // Preserve content being edited to avoid cursor jump
+            const editingNote = existing.showNote && existing.changed ? existing.Note : null
+            const editingTitle = existing.editing ? existing.Title : null
 
             // Check if item moved between lists (complete state changed)
             const wasComplete = existing.Complete
@@ -664,6 +680,10 @@ export default {
 
             // Restore UI state
             Object.assign(existing, uiState)
+
+            // Restore content being edited
+            if (editingNote !== null) existing.Note = editingNote
+            if (editingTitle !== null) existing.Title = editingTitle
 
             // If not currently editing pre-alarm, update display from server value
             if (!existing.showTime) {
